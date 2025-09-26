@@ -1,0 +1,39 @@
+{
+    "manifest_version": 3,
+    "name": "bm-extra",
+    "version": "1.0",
+    "description": "BattleMetrics Extension that aims to enhance your experience with certain quality of life features.",
+    "author": "FlQyD",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.battlemetrics.com/*"
+            ],
+            "run_at": "document_start",
+            "js": [
+                "./main.js"
+            ],
+            "css": [
+                "./main.css"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "assets/copy.png",
+                "assets/copy-gray.png",
+                
+                "modules/display.js"
+            ],
+            "matches": [
+                "*://www.battlemetrics.com/*",
+                "*://battlemetrics.com/*"
+            ]
+        }
+    ],
+    "host_permissions": [
+        "*://api.battlemetrics.com/*",
+        "*://api.steampowered.com/*"
+    ]
+}
