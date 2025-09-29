@@ -21,6 +21,7 @@
     "web_accessible_resources": [
         {
             "resources": [
+                "assets/arrow.png",
                 "assets/copy.png",
                 "assets/copy-gray.png",
                 

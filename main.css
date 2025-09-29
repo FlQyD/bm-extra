@@ -31,3 +31,75 @@
 .offline p{
     color: #b4b4b4 !important;
 }
+
+.bme-section-header{
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+    cursor: pointer;
+}
+.bme-section-header img{
+    width: 30px;
+    height: 30px;
+}
+.bme-section-body{
+    display: flex;
+    gap: 30px;
+    
+    height: 240px;
+    transition: 250ms;
+    overflow-x: hidden;
+}
+#bme-info-panel-arrow{
+    transition: 250ms;
+    transform: rotate(90deg);
+}
+.closed{
+    transform: rotate(0deg) !important;
+}
+.bme-section-body::-webkit-scrollbar {
+    display: none;
+}
+.bme-section-body dt{
+    width: 120px !important;
+}
+.bme-section-body dd{
+    margin-left: 130px !important;
+}
+.bme-red-text{
+    color: #ff5555;
+}
+.bme-yellow-text{
+    color: #ffff00;
+}
+.bme-green-text{
+    color: #55FF55;
+}
+.bme-info-title{
+    margin: 0;
+    font-weight: 700;
+}
+#bme-avatar{
+    margin-right: 10px;
+}
+
+
+
+
+
+
+
+
+
+
+
+/** BM NATIVE*/
+.css-h1lc4m dt {
+    float: left;
+    clear: left;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
