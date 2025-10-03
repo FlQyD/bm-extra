@@ -14,18 +14,21 @@
                 "./main.js"
             ],
             "css": [
-                "./main.css"
+                "./assets/style/main.css",
+                "./assets/style/settings.css"
             ]
         }
     ],
     "web_accessible_resources": [
         {
             "resources": [
-                "assets/arrow.png",
-                "assets/copy.png",
-                "assets/copy-gray.png",
+                "assets/img/arrow.png",
+                "assets/img/copy.png",
+                "assets/img/copy-gray.png",
                 
-                "modules/display.js"
+                "modules/display.js",
+                "modules/getInfoPanel.js",
+                "modules/settings.js"
             ],
             "matches": [
                 "*://www.battlemetrics.com/*",

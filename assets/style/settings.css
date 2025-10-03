@@ -1,0 +1,103 @@
+#bme-settings-background {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    background: #00000080;
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#bme-settings-page {
+    width: 900px;
+    height: 600px;
+    background: #222222;
+    border: 4px solid #ffffff;
+    border-radius: 4px;
+
+    display: flex;
+}
+
+#bme-settings-menu {
+    width: 200px;
+    border-right: 2px solid #ffffff;
+    height: 600px;
+
+    overflow-y: scroll;
+}
+
+#bme-settings-menu::-webkit-scrollbar {
+    display: none;
+}
+
+.bme-settings-menu-point {
+    width: 198px;
+    height: 40px;
+    padding-left: 10px;
+    align-content: center;
+    font-size: 22px;
+    user-select: none;
+    cursor: pointer;
+
+    transition: 100ms;
+}
+
+.bme-settings-menu-point:hover {
+    background: #ffffff20;
+}
+
+#active-setting-menu-point,
+.bme-settings-menu-point:active {
+    background: #ffffff60;
+}
+
+#bme-settings-body {
+    width: 700px;
+    height: 600px;
+    overflow-y: scroll;
+
+    padding-left: 20px;
+}
+
+#bme-settings-body::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+.bme-settings-row {
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.bme-settings-row input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.bme-settings-row h3 {
+    margin: 0 !important;
+}
+
+.bme-settings-row>p {
+    font-size: 14px;
+}
+
+.bme-settings-row>div {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+
+
+
+
+
+
+
+

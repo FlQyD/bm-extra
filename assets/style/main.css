@@ -61,11 +61,16 @@
 .bme-section-body::-webkit-scrollbar {
     display: none;
 }
+.bme-section-body dl{
+    margin-bottom: 0px !important;
+}
 .bme-section-body dt{
     width: 120px !important;
 }
 .bme-section-body dd{
-    margin-left: 130px !important;
+    padding-left: 10px;
+    margin-left: 120px !important;
+    padding-right: 10px;
 }
 .bme-red-text{
     color: #ff5555;
@@ -82,6 +87,9 @@
 }
 #bme-avatar{
     margin-right: 10px;
+}
+.bme-red-background{
+    background: #ff555530;
 }
 
 

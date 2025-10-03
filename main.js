@@ -34,12 +34,12 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity) {
     const settings = getMainSettings();
     if (!settings) return console.log(`BM-EXTRA: Main settings is missing!`);
 
-    const { 
-        displaySettingsButton, 
-        displayServerActivity, 
+    const {
+        displaySettingsButton,
+        displayServerActivity,
         displayInfoPanel,
-        displayAvatar, 
-        removeSteamInformation, 
+        displayAvatar,
+        removeSteamInformation,
         closeAdminLog
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
@@ -50,6 +50,10 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity) {
     if (settings.showAvatar) displayAvatar(bmId, bmProfile, steamData);
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
     if (settings.closeAdminLog) closeAdminLog(bmId);
+
+
+    const { displaySettings } = await import(chrome.runtime.getURL('./modules/settings.js'));
+    displaySettings();
 
 }
 
@@ -109,10 +113,15 @@ function getMainSettings() {
         return JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`)
-        return getDefaultSettings();
+        return getDefaultMainSettings();
     }
 }
 function checkAndSetupSettingsIfMissing() {
+    checkMainSettings();
+    checkBmInfoSettings();
+}
+
+function checkMainSettings() {
     try {
         const mainSettings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"));
         if (typeof (mainSettings) !== "object") throw new Error("Settings error");
@@ -122,18 +131,71 @@ function checkAndSetupSettingsIfMissing() {
         if (typeof (mainSettings.removeSteamInfo) !== "boolean") throw new Error("Settings error");
         if (typeof (mainSettings.closeAdminLog) !== "boolean") throw new Error("Settings error");
     } catch (error) {
-        const defaultSettings = getDefaultSettings();
+        const defaultSettings = getDefaultMainSettings();
         localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(defaultSettings));
     }
 }
-function getDefaultSettings() {
-    const defaultSettings = {};
-    defaultSettings.showServer = true;
-    defaultSettings.showInfoPanel = true;
-    defaultSettings.showAvatar = true;
-    defaultSettings.removeSteamInfo = true;
-    defaultSettings.closeAdminLog = true;
-    return defaultSettings;
+function getDefaultMainSettings() {
+    const settings = {};
+    settings.showServer = true;
+    settings.showInfoPanel = true;
+    settings.showAvatar = true;
+    settings.removeSteamInfo = true;
+    settings.closeAdminLog = true;
+    return settings;
+}
+function checkBmInfoSettings() {
+    try {
+        const bmInfoSettings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"));
+        if (typeof (bmInfoSettings) !== "object") throw new Error("Settings error");
+        if (bmInfoSettings.steamAccountAgeColors) throw new Error("Settings error");
+        if (bmInfoSettings.steamGameCountColors) throw new Error("Settings error");
+        if (bmInfoSettings.steamCombinedHoursColors) throw new Error("Settings error");
+        if (bmInfoSettings.steamRustHoursColors) throw new Error("Settings error");
+        if (bmInfoSettings.bmAccountAgeColors) throw new Error("Settings error");
+        if (bmInfoSettings.bmAccountAgeColors) throw new Error("Settings error");
+        if (bmInfoSettings.serverCountColors) throw new Error("Settings error");
+        if (bmInfoSettings.allReportsBarrier) throw new Error("Settings error");
+        if (bmInfoSettings.allReportsColor) throw new Error("Settings error");
+        if (bmInfoSettings.cheatReportsBarrier) throw new Error("Settings error");
+        if (bmInfoSettings.cheatReportsColors) throw new Error("Settings error");
+        if (bmInfoSettings.bmRustHoursColors) throw new Error("Settings error");
+        if (bmInfoSettings.aimTrainColors) throw new Error("Settings error");
+        if (bmInfoSettings.killBarrier) throw new Error("Settings error");
+        if (bmInfoSettings.killColors) throw new Error("Settings error");
+        if (bmInfoSettings.deathBarrier) throw new Error("Settings error");
+        if (bmInfoSettings.deathColors) throw new Error("Settings error");
+        if (bmInfoSettings.kdBarrier) throw new Error("Settings error");
+        if (bmInfoSettings.kdColors) throw new Error("Settings error");
+    } catch (error) {
+        const defaultSettings = getDefaultBmInfoSettings();
+        localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultBmInfoSettings() {
+    const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
+    const settings = {};
+    settings.steamAccountAgeColors = [30 * 24 * 60 * 60 * 1000, 90 * 24 * 60 * 60 * 1000, -1, false]
+    settings.steamGameCountColors = [2, -1, -1, false]
+    settings.steamCombinedHoursColors = [150, 750, 100000, false]
+    settings.steamRustHoursColors = [150, 750, 100000, false]
+    settings.gamesLastCheckedColors = [30 * 24 * 60 * 60 * 1000, 60 * 24 * 60 * 60 * 1000, 90 * 24 * 60 * 60 * 1000, true]
+    settings.bmAccountAgeColors = [30 * 24 * 60 * 60 * 1000, 90 * 24 * 60 * 60 * 1000, -1, false]
+    settings.serverCountColors = [8, -1, -1], false;
+    settings.allReportsBarrier = TWO_DAYS;
+    settings.allReportsColor = [-1, -1, -1, false];
+    settings.cheatReportsBarrier = TWO_DAYS;
+    settings.cheatReportsColors = [-1, -1, -1, false];
+    settings.bmRustHoursColors = [150, 750, 100000, false];
+    settings.aimTrainColors = [25, 50, 100000, false];
+    settings.killBarrier = TWO_DAYS;
+    settings.killColors = [-1, -1, -1, false];
+    settings.deathBarrier = TWO_DAYS;
+    settings.deathColors = [-1, -1, -1, false];
+    settings.kdBarrier = TWO_DAYS;
+    settings.kdColors = [3, -1, -1, false];
+
+    return settings;
 }
 
 function getAuthToken() {
