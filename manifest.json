@@ -25,6 +25,7 @@
                 "assets/img/arrow.png",
                 "assets/img/copy.png",
                 "assets/img/copy-gray.png",
+                "assets/img/settings.png",
                 
                 "modules/display.js",
                 "modules/getInfoPanel.js",

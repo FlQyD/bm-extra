@@ -147,8 +147,8 @@ function getSteamGameCountElements(steam, settings, isHistoric) {
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
 
     if (isHistoric) {
-        title.classList.add("bme-red-background");
-        value.classList.add("bme-red-background");
+        title.classList.add("bme-highlight");
+        value.classList.add("bme-highlight");
     }
     return [title, value];
 }
@@ -163,8 +163,8 @@ function getSteamCombinedHoursElements(steam, settings, isHistoric) {
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
 
     if (isHistoric) {
-        title.classList.add("bme-red-background");
-        value.classList.add("bme-red-background");
+        title.classList.add("bme-highlight");
+        value.classList.add("bme-highlight");
     }
     return [title, value];
 }
@@ -179,23 +179,25 @@ function getSteamRustHoursElements(steam, settings, isHistoric) {
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
 
     if (isHistoric) {
-        title.classList.add("bme-red-background");
-        value.classList.add("bme-red-background");
+        title.classList.add("bme-highlight");
+        value.classList.add("bme-highlight");
     }
     
     return [title, value];
 }
 function getHistoricTimestampElements(steam, settings) {
-    const title = createHtmlElement("dt", "Last Seen:");
-    title.classList.add("bme-red-background");
+    const title = createHtmlElement("dt", "Last Recorded:");
+    title.classList.add("bme-highlight");
     
     const valueString = getTimeString(steam.gamesLastChecked)+" ago";
 
-    const since = Date.now() - steam.gamesLastChecked;    
+    const since = Date.now() - steam.gamesLastChecked;
+    console.log(settings);
     let currentClass = getAscendingClassString(settings, [since], settings[3]);
-
+    console.log(currentClass);
+    
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
-    value.classList.add("bme-red-background");
+    value.classList.add("bme-highlight");
     return [title, value];
 }
 

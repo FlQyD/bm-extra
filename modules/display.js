@@ -3,8 +3,20 @@ let getTimeString; //Extension import :puke:
 
 
 export async function displaySettingsButton(bmId) {
-    
+    const rconElement = await getRconElement();
+    const title = rconElement?.firstChild;
+    if (!title) return console.error("BM-EXTRA: Failed to located title. Failed to display settings button.")
+    title.classList.add("bme-flex");
 
+    const button = document.createElement("img");
+    button.id = "bme-settings-button"
+    button.src = chrome.runtime.getURL('assets/img/settings.png');
+    title.appendChild(button);
+    const { displaySettings } = await import(chrome.runtime.getURL('./modules/settings.js'));
+
+    button.addEventListener("click", displaySettings)
+
+    
 }
 
 export async function displayServerActivity(bmId, bmProfile) {

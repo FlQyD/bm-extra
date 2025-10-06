@@ -88,10 +88,13 @@
 #bme-avatar{
     margin-right: 10px;
 }
-.bme-red-background{
-    background: #ff555530;
+.bme-highlight{
+    background: #ffffff10;
 }
-
+.bme-flex {
+    display: flex;
+    align-items: center;
+}
 
 
 
