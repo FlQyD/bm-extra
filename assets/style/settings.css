@@ -80,6 +80,13 @@
 #bme-settings-body::-webkit-scrollbar {
     display: none;
 }
+#bme-settings-body h4,
+#bme-settings-body h3,
+#bme-settings-body h2,
+#bme-settings-body p{
+    margin: 0;
+    padding: 0;
+}
 
 .bme-settings-row {
     margin-top: 10px;
@@ -202,7 +209,9 @@ outline: none;
 .bme-button-green-background{
     background: #2db32d !important;
 }
-
+.bme-title-row{
+    gap: 30px;
+}
 
 
 

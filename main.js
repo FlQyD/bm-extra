@@ -21,6 +21,7 @@ async function main(url) {
     const bmId = urlArray[5];
     if (isNaN(Number(bmId))) return;
 
+    const { getAuthToken } = await import(chrome.runtime.getURL('./modules/misc.js'));
     const authToken = getAuthToken();
     if (!authToken) return;
 
@@ -111,19 +112,4 @@ async function getBmActivity(bmId, authToken) {
     } catch (error) {
         console.error(`BM-EXTRA: ${error}`);
     }
-}
-
-function getAuthToken() {
-    const authElement = document.getElementById("oauthToken");
-    if (!authElement) {
-        console.error("BM-EXTRA: Auth element wasn't found.")
-        return null;
-    }
-    const authToken = authElement.innerText;
-    if (!authToken) {
-        console.error("BM-EXTRA: Auth Token is missing.")
-        return null;
-    }
-
-    return authToken;
 }

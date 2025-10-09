@@ -29,7 +29,8 @@
                 
                 "modules/display.js",
                 "modules/getInfoPanel.js",
-                "modules/settings.js"
+                "modules/settings.js",
+                "modules/misc.js"
             ],
             "matches": [
                 "*://www.battlemetrics.com/*",

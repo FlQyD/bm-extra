@@ -1,3 +1,4 @@
+const ONE_DAY = 24*60*60*1000;
 export async function displaySettings() {
     if (document.getElementById("bme-settings-background")) return;
 
@@ -32,15 +33,15 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Settings", "Identifier", "BM Information"];
+    const menuPoints = ["Settings", "Identifier", "BM Information", "Multi Org"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
-        
+
         const menuPoint = document.createElement("div");
         menuPoint.innerText = point;
         menuPoint.classList.add("bme-settings-menu-point")
         if (i === 0) menuPoint.id = "active-setting-menu-point"
-    
+
         menuPoint.addEventListener("click", e => {
             const target = e.target;
 
@@ -53,7 +54,7 @@ function getSettingsMenu() {
 
             const body = document.getElementById("bme-settings-body");
             if (!body) return;
-            
+
             body.innerHTML = "";
             body.appendChild(newBodyContent);
         })
@@ -67,13 +68,13 @@ function getSettingsBody(index) {
     if (index === 0) return getOverViewSettings();
     if (index === 1) return getIdentifierSettings();
     if (index === 2) return getBmInfoSettings();
-    
+    if (index === 3) return getMultiOrgSettings();
 }
 
 function getOverViewSettings() {
     const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
     console.log(settings);
-    
+
     const element = document.createElement("div");
     const title = document.createElement("h1");
     title.innerText = "Main Settings";
@@ -87,7 +88,7 @@ function getOverViewSettings() {
 
     const showInfoPanel = getMainSettingsInputRowElement(settings, "showInfoPanel", "Show BM Information", "Shows detailed information that is stored by battlemetrics and usually not visible by default.");
     element.appendChild(showInfoPanel);
-    
+
     const removeSteamInfo = getMainSettingsInputRowElement(settings, "removeSteamInfo", "Remove Steam Information", "Remove the default Steam information panel from the battlemetrics RCON profile when it appears.");
     element.appendChild(removeSteamInfo);
 
@@ -104,7 +105,7 @@ function getOverViewSettings() {
 }
 function switchMainSettingsTo(id, value) {
     console.log(id, value);
-    
+
     const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
 
     settings[id] = value;
@@ -124,7 +125,7 @@ function getMainSettingsInputRowElement(settings, settingsName, settingsTitle, d
     input.checked = settings[settingsName];
     firstRow.appendChild(input);
 
-    input.addEventListener("change", e => {switchMainSettingsTo(settingsName, e.target.checked)})
+    input.addEventListener("change", e => { switchMainSettingsTo(settingsName, e.target.checked) })
 
     const title = document.createElement("h3");
     title.className = "bme-settings-title";
@@ -181,7 +182,7 @@ function getBmInfoSettings() {
 
     const button = getResetButton("bm-info");
     element.appendChild(button);
-    
+
     return element;
 }
 function getColorSettingsRow(settings, settingsName, settingsTitle, settingsDescription, type) {
@@ -212,7 +213,7 @@ function getColorSettingsRow(settings, settingsName, settingsTitle, settingsDesc
     return row;
 }
 function getColorElement(index, settings, settingsName) {
-    const div =document.createElement("div");
+    const div = document.createElement("div");
     const colorClass = getColorClass(settings[settingsName][3], index);
     div.classList.add(colorClass, "bme-settings-color-div");
 
@@ -228,7 +229,7 @@ function getColorElement(index, settings, settingsName) {
 
         const newValue = target.value;
         if (isNaN(Number(newValue))) return updateStatus(target, false);
-        
+
         const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"));
         settings[settingsName][index] = newValue;
         localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(settings));
@@ -243,13 +244,13 @@ function updateStatus(element, success) {
         setTimeout(() => {
             element.classList.remove("bme-success-input");
         }, 200);
-    }else{
+    } else {
         element.classList.add("bme-error-input");
         setTimeout(() => {
             element.classList.remove("bme-error-input");
         }, 200);
     }
-    
+
 }
 function getColorReverseInput(settings, settingsName) {
     const div = document.createElement("div");
@@ -308,6 +309,35 @@ function getBarrierSettingsRow(settings, settingsName, settingsTitle, settingsDe
 }
 
 
+function getMultiOrgSettings() {
+    const element = document.createElement("div");
+
+    const titleRow = document.createElement("div");
+    titleRow.classList.add("bme-flex", "bme-title-row")
+    element.appendChild(titleRow);
+    
+    const title = document.createElement("h1");
+    title.innerText = "Multi Org Settings";
+    titleRow.appendChild(title);
+
+    const settings = JSON.parse(localStorage.getItem("BME_MULTI_ORG_SETTINGS"))
+    console.log(settings);
+
+    const enableInput = document.createElement("input");
+    enableInput.type = "checkbox";
+    enableInput.classList.add("bme-toggle-input");
+    titleRow.appendChild(enableInput);
+
+    enableInput.addEventListener("change", e => {
+        console.log(e.target.checked);
+        
+    })
+
+    
+
+    return element;
+}
+
 
 
 
@@ -321,11 +351,11 @@ function getResetButton(type) {
 
     button.addEventListener("click", e => {
         const target = e.target;
-        
+
         if (target.innerText === "Reset Settings") {
             target.innerText = "Confirm"
             setTimeout(() => {
-                if(target.innerText !== "Confirm") return;
+                if (target.innerText !== "Confirm") return;
                 target.innerText = "Reset Settings";
             }, 1500);
             return;
@@ -341,8 +371,8 @@ function getResetButton(type) {
 
         location.reload();
     })
-    
-    
+
+
     return wrap;
 }
 
@@ -353,6 +383,7 @@ function getResetButton(type) {
 export function checkAndSetupSettingsIfMissing() {
     checkMainSettings();
     checkBmInfoSettings();
+    checkMultiOrgSettings();
 }
 
 function checkMainSettings() {
@@ -409,27 +440,41 @@ function checkBmInfoSettings() {
     }
 }
 function getDefaultBmInfoSettings() {
-    const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
     const settings = {};
-    settings.steamAccountAgeColors = [30 * 24 * 60 * 60 * 1000, 90 * 24 * 60 * 60 * 1000, -1, false]
+    settings.steamAccountAgeColors = [30 * ONE_DAY, 90 * ONE_DAY, -1, false]
     settings.steamGameCountColors = [2, -1, -1, false]
     settings.steamCombinedHoursColors = [150, 750, 100000, false]
     settings.steamRustHoursColors = [150, 750, 100000, false]
-    settings.gamesLastCheckedColors = [30 * 24 * 60 * 60 * 1000, 60 * 24 * 60 * 60 * 1000, 90 * 24 * 60 * 60 * 1000, true]
-    settings.bmAccountAgeColors = [30 * 24 * 60 * 60 * 1000, 90 * 24 * 60 * 60 * 1000, -1, false]
+    settings.gamesLastCheckedColors = [30 * ONE_DAY, 60 * ONE_DAY, 90 * ONE_DAY, true]
+    settings.bmAccountAgeColors = [30 * ONE_DAY, 90 * ONE_DAY, -1, false]
     settings.serverCountColors = [8, -1, -1], false;
-    settings.allReportsBarrier = TWO_DAYS;
+    settings.allReportsBarrier = 2 * ONE_DAY;
     settings.allReportsColor = [-1, -1, -1, false];
-    settings.cheatReportsBarrier = TWO_DAYS;
+    settings.cheatReportsBarrier = 2 * ONE_DAY;
     settings.cheatReportsColors = [-1, -1, -1, false];
     settings.bmRustHoursColors = [150, 750, 100000, false];
     settings.aimTrainColors = [25, 50, 100000, false];
-    settings.killBarrier = TWO_DAYS;
+    settings.killBarrier = 2 * ONE_DAY;
     settings.killColors = [-1, -1, -1, false];
-    settings.deathBarrier = TWO_DAYS;
+    settings.deathBarrier = 2 * ONE_DAY;
     settings.deathColors = [-1, -1, -1, false];
-    settings.kdBarrier = TWO_DAYS;
+    settings.kdBarrier = 2 * ONE_DAY;
     settings.kdColors = [3, -1, -1, false];
 
+    return settings;
+}
+function checkMultiOrgSettings() {
+    try {
+        const bmMultiOrgSettings = JSON.parse(localStorage.getItem("BME_MULTI_ORG_SETTINGS"));
+        if (typeof (bmMultiOrgSettings) !== "object") throw new Error("Settings error");
+        if (typeof (bmMultiOrgSettings.enabled) !== "boolean") throw new Error("Settings error");
+    } catch (error) {
+        const defaultSettings = getDefaultMultiOrgSettings();
+        localStorage.setItem("BME_MULTI_ORG_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultMultiOrgSettings() {
+    const settings = {};
+    settings.enabled = false;
     return settings;
 }
