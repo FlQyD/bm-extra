@@ -120,14 +120,14 @@ function getSteamData(steamIdObject, steamData) {
     returnData.steamId = steamIdObject.attributes?.identifier;
 
     const metadata = steamIdObject.attributes?.metadata;    
+    
+    returnData.gameBanCount = metadata?.bans ? metadata.bans.NumberOfGameBans : null;
+    returnData.vacBanCount = metadata?.bans ? metadata.bans.NumberOfVACBans : null;
+    returnData.daysSinceLastBan = metadata?.bans ? metadata.bans.DaysSinceLastBan : null;
+    returnData.vacBanStatus = metadata?.bans ? metadata.bans.VACBanned : null;
+    returnData.communityBanned = metadata?.bans ? metadata.bans.CommunityBanned : null;
 
-    returnData.gameBanCount = metadata.bans ? metadata.bans.NumberOfGameBans : null;
-    returnData.vacBanCount = metadata.bans ? metadata.bans.NumberOfVACBans : null;
-    returnData.daysSinceLastBan = metadata.bans ? metadata.bans.DaysSinceLastBan : null;
-    returnData.vacBanStatus = metadata.bans ? metadata.bans.VACBanned : null;
-    returnData.communityBanned = metadata.bans ? metadata.bans.CommunityBanned : null;
-
-    if (metadata.gameInfo && metadata.gameInfo.game_count > 0) {
+    if (metadata?.gameInfo && metadata.gameInfo.game_count > 0) {
         const hoursPlayed = metadata.gameInfo.games.map(game => game.playtime_forever);
 
         returnData.gameCount = metadata.gameInfo.game_count;
@@ -145,9 +145,9 @@ function getSteamData(steamIdObject, steamData) {
         returnData.gamesLastChecked = null;
     }
     
-    returnData.visibility = metadata.profile ? metadata.profile.communityvisibilitystate : null;
-    returnData.limitedAccount = typeof (metadata.profile?.isLimitedAccount) === "boolean" ? metadata.profile.isLimitedAccount : null;
-    returnData.isSetup = metadata.profile ? metadata.profile.profilestate ? true : false : null;
+    returnData.visibility = metadata?.profile ? metadata.profile.communityvisibilitystate : null;
+    returnData.limitedAccount = typeof (metadata?.profile?.isLimitedAccount) === "boolean" ? metadata.profile.isLimitedAccount : null;
+    returnData.isSetup = metadata?.profile ? metadata.profile.profilestate ? true : false : null;
     returnData.accountAge = steamData ? steamData.data.memberSince ?
         new Date(steamData.data.attributes.memberSince).getTime() :
         new Date(steamData.data.attributes.memberSinceAprox).getTime() : null;

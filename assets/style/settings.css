@@ -1,18 +1,21 @@
-#bme-settings-button{
+#bme-settings-button {
     width: 45px;
     height: 45px;
-    
+
     margin-left: auto;
     border-radius: 5px;
     transition: 200ms;
     cursor: pointer;
 }
-#bme-settings-button:hover{
+
+#bme-settings-button:hover {
     background: #ffffff30;
 }
-#bme-settings-button:active{
+
+#bme-settings-button:active {
     background: #ffffff60;
-}   
+}
+
 #bme-settings-background {
     width: 100%;
     height: 100%;
@@ -80,10 +83,11 @@
 #bme-settings-body::-webkit-scrollbar {
     display: none;
 }
+
 #bme-settings-body h4,
 #bme-settings-body h3,
 #bme-settings-body h2,
-#bme-settings-body p{
+#bme-settings-body p {
     margin: 0;
     padding: 0;
 }
@@ -113,29 +117,33 @@
     margin-top: 20px;
 }
 
-.bme-settings-bm-info-row > h4 {
+.bme-settings-bm-info-row>h4 {
     margin-bottom: 0 !important;
 }
-.bme-settings-bm-info-row > p {
+
+.bme-settings-bm-info-row>p {
     font-size: 16px;
     padding-left: 20px;
     margin-top: 10px;
-    margin-bottom: 0px !important   ;
+    margin-bottom: 0px !important;
 }
-.bme-settings-bm-info-row > div{
+
+.bme-settings-bm-info-row>div {
     margin-left: 20px;
     display: flex;
     align-items: center;
 }
 
 
-.bme-settings-color-div{
+.bme-settings-color-div {
     padding: 10px 0px;
 }
-.bme-settings-color-div input:active{
-outline: none;
+
+.bme-settings-color-div input:active {
+    outline: none;
 }
-.bme-settings-color-div input{
+
+.bme-settings-color-div input {
     background: #00000040;
     border: 2px solid #000000bf;
     margin: 0px 10px;
@@ -143,14 +151,17 @@ outline: none;
     justify-content: center;
     transition: 150ms;
 }
-.bme-success-input{
+
+.bme-success-input {
     border-color: #55FF55 !important;
     background-color: #55FF5580 !important;
 }
-.bme-error-input{
+
+.bme-error-input {
     border-color: #ff5555 !important;
     background-color: #ff555580 !important;
 }
+
 .bme-red-highlight {
     background: #ff555560;
     border-color: #ff5555;
@@ -165,32 +176,36 @@ outline: none;
     background: #55FF5560;
     border-color: #55FF55;
 }
-.bme-color-switch-wrapper{
+
+.bme-color-switch-wrapper {
     width: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-.bme-color-switch-input{
+
+.bme-color-switch-input {
     width: 30px;
     height: 30px;
     cursor: pointer;
     margin: 0 !important;
 }
-#bme-reset-button-wrapper{
+
+#bme-reset-button-wrapper {
     width: 100%;
     height: 200px;
-    
+
     display: flex;
     justify-content: center;
     align-items: center;
 }
-#bme-reset-button-wrapper button{
+
+#bme-reset-button-wrapper button {
     width: 250px;
     height: 60px;
     font-size: 20px;
     font-weight: 600;
-    
+
     background-color: #ff3333;
     border: none;
     border-radius: 30px;
@@ -198,18 +213,21 @@ outline: none;
     cursor: pointer;
     transition: 150ms;
 }
-#bme-reset-button-wrapper button:hover{
+
+#bme-reset-button-wrapper button:hover {
     background-color: #ff3333cc;
 }
-#bme-reset-button-wrapper button:active{
+
+#bme-reset-button-wrapper button:active {
     background-color: #ff333399;
     transform: scale(0.98);
 }
 
-.bme-button-green-background{
+.bme-button-green-background {
     background: #2db32d !important;
 }
-.bme-title-row{
+
+.bme-title-row {
     gap: 30px;
 }
 
@@ -260,7 +278,6 @@ outline: none;
     transform: translateX(20px);
 }
 
-
 .bme-toggle-input[type="checkbox"]:active::after {
     transform: translateX(0) scale(.96);
 }
@@ -275,6 +292,7 @@ outline: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     .bme-toggle-input[type="checkbox"],
     .bme-toggle-input[type="checkbox"]::after {
         transition: none;
