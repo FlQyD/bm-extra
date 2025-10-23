@@ -94,9 +94,13 @@ function getOverViewSettings() {
 
     const showServer = getMainSettingsInputRowElement(settings, "showServer", "Show server", "Show the either the current or the last server the user has played on, as well as displaying connection details.");
     element.appendChild(showServer);
+    
+    const advancedBans = getMainSettingsInputRowElement(settings, "advancedBans", "Advanced Bans", "Update ban reasons for a more readable format.");
+    element.appendChild(advancedBans);
 
     const closeAdminLog = getMainSettingsInputRowElement(settings, "closeAdminLog", "Close Admin Log", "Close admin log by default when opening a battlemetrics profile.");
     element.appendChild(closeAdminLog);
+    
 
     const button = getResetButton("bm-main");
     element.appendChild(button);
@@ -104,13 +108,8 @@ function getOverViewSettings() {
     return element;
 }
 function switchMainSettingsTo(id, value) {
-    console.log(id, value);
-
     const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
-
     settings[id] = value;
-
-    console.log(settings);
     localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(settings));
 }
 function getMainSettingsInputRowElement(settings, settingsName, settingsTitle, description) {
@@ -153,7 +152,6 @@ function getIdentifierSettings() {
 
 function getBmInfoSettings() {
     const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"))
-    console.log(settings);
 
     const element = document.createElement("div");
     const title = document.createElement("h1");
@@ -321,7 +319,6 @@ function getMultiOrgSettings() {
     titleRow.appendChild(title);
 
     const settings = JSON.parse(localStorage.getItem("BME_MULTI_ORG_SETTINGS"))
-    console.log(settings);
 
     const enableInput = document.createElement("input");
     enableInput.type = "checkbox";
@@ -395,6 +392,7 @@ function checkMainSettings() {
         if (typeof (mainSettings.showAvatarOverview) !== "boolean") throw new Error("Settings error");
         if (typeof (mainSettings.showAvatarIdentifier) !== "boolean") throw new Error("Settings error");
         if (typeof (mainSettings.removeSteamInfo) !== "boolean") throw new Error("Settings error");
+        if (typeof (mainSettings.advancedBans) !== "boolean") throw new Error("Settings error");
         if (typeof (mainSettings.closeAdminLog) !== "boolean") throw new Error("Settings error");
     } catch (error) {
         const defaultSettings = getDefaultMainSettings();
@@ -408,6 +406,7 @@ function getDefaultMainSettings() {
     settings.showAvatarOverview = true;
     settings.showAvatarIdentifier = false;
     settings.removeSteamInfo = true;
+    settings.advancedBans = true;
     settings.closeAdminLog = true;
     return settings;
 }

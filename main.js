@@ -1,4 +1,4 @@
-console.log("EXTENSION: bm-identifiers loaded!")
+console.log("EXTENSION: bm-extra loaded!")
 const cache = {};
 
 //Extension should fire/refresh on page change
@@ -29,14 +29,15 @@ async function main(url) {
     //const bmRelations = getBmRelations(bmId, authToken);
     const bmActivity = getBmActivity(bmId, authToken);
     const steamData = getSteamData(bmId, authToken);
+    const bmBanData = getBmBanData(bmId, authToken);    
 
-    if (!urlArray[6]) onOverviewPage(bmId, bmProfile, steamData, bmActivity);
+    if (!urlArray[6]) onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData);
     if (urlArray[6] && urlArray[6] === "identifiers") onIdentifierPage(bmId, bmProfile, steamData, bmActivity)
 
         
 }
 
-async function onOverviewPage(bmId, bmProfile, steamData, bmActivity) {
+async function onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData) {
     const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
     if (!settings) return console.log(`BM-EXTRA: Main settings is missing!`);
 
@@ -46,7 +47,8 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity) {
         displayInfoPanel,
         displayAvatar,
         removeSteamInformation,
-        closeAdminLog
+        closeAdminLog,
+        advancedBans
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
     displaySettingsButton()
@@ -56,6 +58,8 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity) {
     if (settings.showAvatarOverview) displayAvatar(bmId, bmProfile, steamData);
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
     if (settings.closeAdminLog) closeAdminLog(bmId);
+    if (settings.advancedBans) advancedBans(bmId, bmBanData);
+    
 
 }
 async function onIdentifierPage(bmId, bmProfile, steamData, bmActivity) {
@@ -97,6 +101,20 @@ async function getBmProfileData(bmId, authToken) {
 }
 async function getBmRelations() {
 
+}
+async function getBmBanData(bmId, authToken) {
+    if (cache[bmId] && cache[bmId]["bmBans"]) return cache[bmId]["bmBans"]; //If cached, return it from cache.
+    try {
+        const resp = await fetch(`https://api.battlemetrics.com/bans?version=^0.1.0&filter[player]=${bmId}&filter[expired]=true&access_token=${authToken}`);
+        if (resp?.status !== 200) throw new Error(`Failed to request player activity. | Status: ${resp?.status}`);
+        const data = await resp.json();
+
+        if (!cache[bmId]) cache[bmId] = {};
+        cache[bmId]["bmBans"] = data;
+        return data;
+    } catch (error) {
+        console.error(`BM-EXTRA: ${error}`);
+    }  
 }
 async function getBmActivity(bmId, authToken) {
     if (cache[bmId] && cache[bmId]["bmActivity"]) return cache[bmId]["bmActivity"]; //If cached, return it from cache.

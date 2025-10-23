@@ -192,9 +192,7 @@ function getHistoricTimestampElements(steam, settings) {
     const valueString = getTimeString(steam.gamesLastChecked)+" ago";
 
     const since = Date.now() - steam.gamesLastChecked;
-    console.log(settings);
     let currentClass = getAscendingClassString(settings, [since], settings[3]);
-    console.log(currentClass);
     
     const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
     value.classList.add("bme-highlight");

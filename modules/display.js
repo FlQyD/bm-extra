@@ -16,7 +16,7 @@ export async function displaySettingsButton(bmId) {
 
     button.addEventListener("click", displaySettings)
 
-    
+
 }
 
 export async function displayServerActivity(bmId, bmProfile) {
@@ -119,8 +119,8 @@ function getSteamData(steamIdObject, steamData) {
     const returnData = {}
     returnData.steamId = steamIdObject.attributes?.identifier;
 
-    const metadata = steamIdObject.attributes?.metadata;    
-    
+    const metadata = steamIdObject.attributes?.metadata;
+
     returnData.gameBanCount = metadata?.bans ? metadata.bans.NumberOfGameBans : null;
     returnData.vacBanCount = metadata?.bans ? metadata.bans.NumberOfVACBans : null;
     returnData.daysSinceLastBan = metadata?.bans ? metadata.bans.DaysSinceLastBan : null;
@@ -144,7 +144,7 @@ function getSteamData(steamIdObject, steamData) {
         returnData.rustHours = null;
         returnData.gamesLastChecked = null;
     }
-    
+
     returnData.visibility = metadata?.profile ? metadata.profile.communityvisibilitystate : null;
     returnData.limitedAccount = typeof (metadata?.profile?.isLimitedAccount) === "boolean" ? metadata.profile.isLimitedAccount : null;
     returnData.isSetup = metadata?.profile ? metadata.profile.profilestate ? true : false : null;
@@ -238,7 +238,6 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData) {
     title.insertAdjacentElement("afterbegin", avatarElement)
 }
 
-
 export async function removeSteamInformation(bmId) {
     const link = document.getElementsByClassName("links");
     let count = 0;
@@ -252,7 +251,7 @@ export async function removeSteamInformation(bmId) {
     while (parent) {
         const title = parent.firstChild?.firstChild?.innerText?.trim();
         if (title === "Steam Information") return parent.remove();
-        
+
         parent = parent.parentNode;
         await new Promise(r => { setTimeout(r, 100); })
     }
@@ -271,6 +270,66 @@ export async function closeAdminLog(bmId) {
     }
 
 }
+
+export async function advancedBans(bmId, banDataP) {
+    const banData = await banDataP
+
+
+    const rconElement = await getRconElement();
+    const sections = rconElement?.lastChild.firstChild.childNodes;
+
+    let banSection = null;
+    for (const section of sections) {
+        if (section.firstChild.innerText.trim() !== "Current & Past bans") continue;
+        banSection = section;
+        break;
+    }
+
+    if (!banSection) return console.error("BM-EXTRA: Failed to locate ban section.");
+    const banList = banSection.lastChild?.firstChild?.childNodes;
+    if (!banList) return console.error("BM-EXTRA: Failed to locate ban list.");
+
+    const urlId = location.href.split("/")[5];
+    if (urlId !== bmId) return true; //Page changed | Abort
+    for (const banElement of banList) {
+        const banId = banElement.firstChild.href.split("/")[6];
+        const banSpan = banElement.firstChild.firstChild;
+
+        const banItem = getBanItem(banData, banId);
+        if (!banItem || !banSpan) continue;
+
+        convertBanSpan(banItem, banSpan);
+    }
+}
+function convertBanSpan(ban, span) {
+    const banReason = ban.attributes.reason.split(" | ")[0];
+    const timestamp = new Date(ban.attributes.timestamp).getTime();
+
+    const expiration = ban.attributes.expires === null ? 0 : new Date(ban.attributes.expires).getTime();
+    const active = expiration === 0 ? true : Date.now() < expiration;
+    const length = expiration === 0 ? 0 : expiration - timestamp;
+
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const lengthText = length === 0 ? `Permanent` : `${Math.round(length / ONE_DAY * 10) / 10} days`;
+    const lengthString = active ? `<b>${lengthText}</b>` : `${lengthText}`;
+
+    const stringArray = [
+        `${getTimeString(timestamp)} ago`,
+        `<b>${banReason}</b>`,
+        `${active === true ? "<b>Active</b>" : "Expired"}`,
+        lengthString
+    ]
+    span.innerHTML = `${stringArray.join("&nbsp;&nbsp;|&nbsp;&nbsp;")}`;
+}
+function getBanItem(banData, banId) {
+    for (const ban of banData.data)
+        if (ban.id === banId) return ban;
+    return null;
+}
+
+
+
+
 
 async function getRconElement() {
     let element = document.getElementById("RCONPlayerPage");
