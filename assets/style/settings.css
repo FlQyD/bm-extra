@@ -30,10 +30,10 @@
 }
 
 #bme-settings-page {
-    width: 910px;
-    height: 610px;
+    width: 926px;
+    height: 606px;
     background: #222222;
-    border: 5px solid #ffffff;
+    border: 3px solid #ffffff;
     border-radius: 5px;
 
     display: flex;
@@ -41,7 +41,7 @@
 
 #bme-settings-menu {
     width: 200px;
-    border-right: 2px solid #ffffff;
+    border-right: 1px solid #ffffff;
     height: 600px;
 
     overflow-y: scroll;
@@ -84,6 +84,9 @@
     display: none;
 }
 
+#bme-settings-body h1{
+    margin: 20px 0px;
+}
 #bme-settings-body h4,
 #bme-settings-body h3,
 #bme-settings-body h2,

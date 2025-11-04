@@ -9,7 +9,6 @@ navigation.addEventListener("navigate", async (event) => {
 //Extension should fire/refresh on page change
 
 async function main(url) {
-
     const { checkAndSetupSettingsIfMissing } = await import(chrome.runtime.getURL('./modules/settings.js'));
     checkAndSetupSettingsIfMissing();
     
@@ -32,9 +31,7 @@ async function main(url) {
     const bmBanData = getBmBanData(bmId, authToken);    
 
     if (!urlArray[6]) onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData);
-    if (urlArray[6] && urlArray[6] === "identifiers") onIdentifierPage(bmId, bmProfile, steamData, bmActivity)
-
-        
+    if (urlArray[6] && urlArray[6] === "identifiers") onIdentifierPage(bmId, bmProfile, steamData, bmActivity)        
 }
 
 async function onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData) {
@@ -42,13 +39,10 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData)
     if (!settings) return console.log(`BM-EXTRA: Main settings is missing!`);
 
     const {
-        displaySettingsButton,
-        displayServerActivity,
-        displayInfoPanel,
-        displayAvatar,
+        displaySettingsButton, displayServerActivity,
+        displayInfoPanel, displayAvatar,
         removeSteamInformation,
-        closeAdminLog,
-        advancedBans
+        closeAdminLog, advancedBans
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
     displaySettingsButton()
@@ -57,8 +51,8 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData)
     if (settings.showInfoPanel) displayInfoPanel(bmId, bmProfile, steamData, bmActivity);
     if (settings.showAvatarOverview) displayAvatar(bmId, bmProfile, steamData);
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
-    if (settings.closeAdminLog) closeAdminLog(bmId);
     if (settings.advancedBans) advancedBans(bmId, bmBanData);
+    if (settings.closeAdminLog) closeAdminLog(bmId);
     
 
 }

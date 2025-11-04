@@ -33,7 +33,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Settings", "Identifier", "BM Information", "Multi Org"];
+    const menuPoints = ["Settings", "Overview", "Identifier", "BM Information", "Multi Org", "Evasion Checker"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -65,13 +65,15 @@ function getSettingsMenu() {
 }
 
 function getSettingsBody(index) {
-    if (index === 0) return getOverViewSettings();
-    if (index === 1) return getIdentifierSettings();
-    if (index === 2) return getBmInfoSettings();
-    if (index === 3) return getMultiOrgSettings();
+    if (index === 0) return getMainSettings();
+    if (index === 1) return getOverviewSettings();
+    if (index === 2) return getIdentifierSettings();
+    if (index === 3) return getBmInfoSettings();
+    if (index === 4) return getMultiOrgSettings();
+    if (index === 5) return getMultiOrgSettings(); //Evasion Checker
 }
 
-function getOverViewSettings() {
+function getMainSettings() {
     const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
     console.log(settings);
 
@@ -92,7 +94,7 @@ function getOverViewSettings() {
     const removeSteamInfo = getMainSettingsInputRowElement(settings, "removeSteamInfo", "Remove Steam Information", "Remove the default Steam information panel from the battlemetrics RCON profile when it appears.");
     element.appendChild(removeSteamInfo);
 
-    const showServer = getMainSettingsInputRowElement(settings, "showServer", "Show server", "Show the either the current or the last server the user has played on, as well as displaying connection details.");
+    const showServer = getMainSettingsInputRowElement(settings, "showServer", "Show server", "Show either the current or the last server the user has played on, as well as displaying connection details.");
     element.appendChild(showServer);
     
     const advancedBans = getMainSettingsInputRowElement(settings, "advancedBans", "Advanced Bans", "Update ban reasons for a more readable format.");
@@ -106,11 +108,6 @@ function getOverViewSettings() {
     element.appendChild(button);
 
     return element;
-}
-function switchMainSettingsTo(id, value) {
-    const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
-    settings[id] = value;
-    localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(settings));
 }
 function getMainSettingsInputRowElement(settings, settingsName, settingsTitle, description) {
     const row = document.createElement("div");
@@ -138,7 +135,11 @@ function getMainSettingsInputRowElement(settings, settingsName, settingsTitle, d
     row.append(firstRow, desc);
     return row;
 }
-
+function switchMainSettingsTo(id, value) {
+    const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
+    settings[id] = value;
+    localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(settings));
+}
 function getIdentifierSettings() {
     const element = document.createElement("div");
     const title = document.createElement("h1");
@@ -149,6 +150,15 @@ function getIdentifierSettings() {
     return element;
 }
 
+function getOverviewSettings() {
+    const element = document.createElement("div");
+    const title = document.createElement("h1");
+    title.innerText = "Overview Settings";
+    element.appendChild(title);
+
+
+    return element;
+}
 
 function getBmInfoSettings() {
     const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"))

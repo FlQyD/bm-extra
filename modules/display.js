@@ -4,6 +4,8 @@ let getTimeString; //Extension import :puke:
 
 export async function displaySettingsButton(bmId) {
     const rconElement = await getRconElement();
+    setTimeout(() => { _rconElement = null }, 50); //RESET RCON
+
     const title = rconElement?.firstChild;
     if (!title) return console.error("BM-EXTRA: Failed to located title. Failed to display settings button.")
     title.classList.add("bme-flex");
@@ -330,21 +332,30 @@ function getBanItem(banData, banId) {
 
 
 
+let _rconElement = null;
+async function getRconElement() {    
+    if (!_rconElement || Date.now() > (_rconElement.timestamp + 5000)) {
+        _rconElement = {
+            timestamp: Date.now(),
+            element: findRconElement()
+        }
+    }
 
-async function getRconElement() {
+    return _rconElement.element;
+}
+async function findRconElement() {
     let element = document.getElementById("RCONPlayerPage");
     let count = 0;
     while (!element) {
         count++;
-        if (count > 50) {
+        if (count > 50) {            
             console.error("BM-EXTRA: Failed to locate the RCONPlayerPage element.");
             return null;
         }
+        console.log(count);
         await new Promise(r => { setTimeout(r, 25 + (count * 5)); })
-
         element = document.getElementById("RCONPlayerPage");
     }
-
     return element;
 }
 function getSteamIdObject(array) {
