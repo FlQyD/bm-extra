@@ -41,12 +41,12 @@ async function onOverviewPage(bmId, bmProfile, steamData, bmActivity, bmBanData)
     const {
         displaySettingsButton, displayServerActivity,
         displayInfoPanel, displayAvatar,
-        removeSteamInformation,
-        closeAdminLog, advancedBans
+        removeSteamInformation, insertSidebars,
+        closeAdminLog, advancedBans, 
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
     displaySettingsButton()
-
+    insertSidebars();
     if (settings.showServer) displayServerActivity(bmId, bmProfile);
     if (settings.showInfoPanel) displayInfoPanel(bmId, bmProfile, steamData, bmActivity);
     if (settings.showAvatarOverview) displayAvatar(bmId, bmProfile, steamData);
@@ -113,9 +113,9 @@ async function getBmBanData(bmId, authToken) {
 async function getBmActivity(bmId, authToken) {
     if (cache[bmId] && cache[bmId]["bmActivity"]) return cache[bmId]["bmActivity"]; //If cached, return it from cache.
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/activity?version=^0.1.0&tagTypeMode=and&filter[tags][blacklist]=2ff49080-f925-47e4-ab9b-9cdb75575695&filter[types][whitelist]=rustLog:playerReport,rustLog:playerDeath:PVP&filter[players]=${bmId}&include=organization,user&page[size]=100&access_token=${authToken}`);
+        const resp = await fetch(`https://api.battlemetrics.com/activity?version=^0.1.0&tagTypeMode=and&filter[tags][blacklist]=2ff49080-f925-47e4-ab9b-9cdb75575695&filter[types][whitelist]=rustLog:playerReport,rustLog:playerDeath:PVP&filter[players]=${bmId}&include=organization,user&page[size]=1000&access_token=${authToken}`);
         if (resp?.status !== 200) throw new Error(`Failed to request player activity. | Status: ${resp?.status}`);
-        const data = resp.json()
+        const data = await resp.json()        
 
         if (!cache[bmId]) cache[bmId] = {};
         cache[bmId]["bmActivity"] = data; //Store to cache, before returning;

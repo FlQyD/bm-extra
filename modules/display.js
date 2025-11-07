@@ -329,6 +329,31 @@ function getBanItem(banData, banId) {
     return null;
 }
 
+export async function insertSidebars() {
+    const elements = document.querySelectorAll(".bme-sidebar");
+    elements.forEach(item => item.remove())
+
+    const rconElement = await getRconElement();
+    const parent = rconElement?.parentNode?.parentNode;
+    if (!parent) return console.error("BM-EXTRA: Failed to locate parent of rconElement for sidebar placements.");
+    
+    const left = getSidebarElement("left");
+    parent.appendChild(left)
+    
+    const right = getSidebarElement("right");
+    parent.appendChild(right)
+}
+function getSidebarElement(side) {
+    const element = document.createElement("div");
+    element.classList.add("bme-sidebar", `bme-sidebar-${side}`);
+
+    for (let i = 0; i < 4; i++) {
+        const slot = document.createElement("div");
+        slot.id = `bme-sidebar-${side}-slot-${i+1}`;
+        element.appendChild(slot);
+    }
+    return element;
+}
 
 
 
@@ -352,7 +377,6 @@ async function findRconElement() {
             console.error("BM-EXTRA: Failed to locate the RCONPlayerPage element.");
             return null;
         }
-        console.log(count);
         await new Promise(r => { setTimeout(r, 25 + (count * 5)); })
         element = document.getElementById("RCONPlayerPage");
     }
