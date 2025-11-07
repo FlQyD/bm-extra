@@ -1,4 +1,4 @@
-const ONE_DAY = 24*60*60*1000;
+const ONE_DAY = 24 * 60 * 60 * 1000;
 export async function displaySettings() {
     if (document.getElementById("bme-settings-background")) return;
 
@@ -24,7 +24,7 @@ function getSettingsPage() {
     body.id = "bme-settings-body";
     page.appendChild(body);
 
-    const content = getSettingsBody(0);
+    const content = getSettingsBody(4);
     body.appendChild(content);
 
     return bg;
@@ -33,7 +33,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Settings", "Overview", "Identifier", "BM Information", "Multi Org", "Evasion Checker"];
+    const menuPoints = ["Settings", "Overview", "Identifier", "BM Information", "Streamer Mode", "Multi Org", "Evasion Checker", "API Keys"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -69,8 +69,10 @@ function getSettingsBody(index) {
     if (index === 1) return getOverviewSettings();
     if (index === 2) return getIdentifierSettings();
     if (index === 3) return getBmInfoSettings();
-    if (index === 4) return getMultiOrgSettings();
-    if (index === 5) return getMultiOrgSettings(); //Evasion Checker
+    if (index === 4) return getStreamerModeSettings();
+    if (index === 5) return getMultiOrgSettings();
+    if (index === 6) return getMultiOrgSettings(); //Evasion Checker
+    if (index === 7) return getApiKeysSettings(); //
 }
 
 function getMainSettings() {
@@ -96,13 +98,13 @@ function getMainSettings() {
 
     const showServer = getMainSettingsInputRowElement(settings, "showServer", "Show server", "Show either the current or the last server the user has played on, as well as displaying connection details.");
     element.appendChild(showServer);
-    
+
     const advancedBans = getMainSettingsInputRowElement(settings, "advancedBans", "Advanced Bans", "Update ban reasons for a more readable format.");
     element.appendChild(advancedBans);
 
     const closeAdminLog = getMainSettingsInputRowElement(settings, "closeAdminLog", "Close Admin Log", "Close admin log by default when opening a battlemetrics profile.");
     element.appendChild(closeAdminLog);
-    
+
 
     const button = getResetButton("bm-main");
     element.appendChild(button);
@@ -140,6 +142,9 @@ function switchMainSettingsTo(id, value) {
     settings[id] = value;
     localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(settings));
 }
+
+
+
 function getIdentifierSettings() {
     const element = document.createElement("div");
     const title = document.createElement("h1");
@@ -150,6 +155,8 @@ function getIdentifierSettings() {
     return element;
 }
 
+
+
 function getOverviewSettings() {
     const element = document.createElement("div");
     const title = document.createElement("h1");
@@ -159,6 +166,8 @@ function getOverviewSettings() {
 
     return element;
 }
+
+
 
 function getBmInfoSettings() {
     const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"))
@@ -317,13 +326,14 @@ function getBarrierSettingsRow(settings, settingsName, settingsTitle, settingsDe
 }
 
 
+
 function getMultiOrgSettings() {
     const element = document.createElement("div");
 
     const titleRow = document.createElement("div");
     titleRow.classList.add("bme-flex", "bme-title-row")
     element.appendChild(titleRow);
-    
+
     const title = document.createElement("h1");
     title.innerText = "Multi Org Settings";
     titleRow.appendChild(title);
@@ -337,17 +347,78 @@ function getMultiOrgSettings() {
 
     enableInput.addEventListener("change", e => {
         console.log(e.target.checked);
-        
+
     })
 
-    
+
 
     return element;
 }
 
 
 
+function getApiKeysSettings() {
+    const element = document.createElement("div");
 
+    const titleRow = document.createElement("div");
+    titleRow.classList.add("bme-flex", "bme-title-row")
+    element.appendChild(titleRow);
+
+    const title = document.createElement("h1");
+    title.innerText = "API Keys";
+    titleRow.appendChild(title);
+
+    const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api");
+    const steamKeyElement = getApiKeyDiv("Steam API Key:", "BME_STEAM_API_KEY", "steam-api");
+    const rustApiKeyElement = getApiKeyDiv("Rust API Key:", "BME_RUST_API_KEY", "rust-api");
+    element.append(battleMetricsKeyElements, steamKeyElement, rustApiKeyElement);
+
+
+    return element;
+}
+function getApiKeyDiv(titleText, value, id) {
+    const container = document.createElement("div");
+
+    const currentKey = localStorage.getItem(value);
+
+    const title = document.createElement("h3")
+    title.innerText = titleText;
+    container.appendChild(title)
+
+    const detail = document.createElement("p");
+    detail.id = `${id}-key-detail`;
+    detail.classList.add("bme-key-settings-detail");
+    detail.innerText = getKeyDetailContent(currentKey);
+    container.appendChild(detail);
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("bme-key-settings-wrapper");
+    container.appendChild(wrapper);
+
+    const keyInput = document.createElement("input");
+    keyInput.id = `${id}-key-input`;
+    wrapper.appendChild(keyInput);
+
+    const updateButton = document.createElement("button");
+    updateButton.innerText = "Update"
+    wrapper.appendChild(updateButton);
+
+    updateButton.addEventListener("click", e => {
+        const input = document.getElementById(`${id}-key-input`);
+        const newKey = input.value;
+        input.value = "";
+
+        localStorage.setItem(value, newKey);
+
+        const detailItem = document.getElementById(`${id}-key-detail`);
+        detailItem.innerText = getKeyDetailContent(newKey);
+    })
+
+    return container;
+}
+function getKeyDetailContent(key) {
+    return key ? `Your key starts with: ${key.substring(0, 10)}` : "You have no key saved yet.";
+}
 function getResetButton(type) {
     const wrap = document.createElement("div");
     wrap.id = "bme-reset-button-wrapper";
@@ -383,6 +454,130 @@ function getResetButton(type) {
     return wrap;
 }
 
+function getStreamerModeSettings() {
+    const element = document.createElement("div");
+
+    const titleRow = document.createElement("div");
+    titleRow.classList.add("bme-flex", "bme-title-row")
+    element.appendChild(titleRow);
+
+    const title = document.createElement("h1");
+    title.innerText = "Streamer Mode Settings:";
+    titleRow.appendChild(title);
+
+    const updater = getSmUpdater();
+    element.appendChild(updater);
+
+
+
+    return element;
+}
+
+function getSmUpdater() {
+    const element = document.createElement("div");
+    element.classList.add("bme-sm-settings-updater")
+
+    const title = document.createElement("h3");
+    title.innerText = "Stored Names:";
+    element.appendChild(title);
+
+    const text = document.createElement("p");
+    text.innerText = "Streamer Mode names should be uploaded and stored from the game files. They may change with an update, in which case they will have to be reuploaded.";
+    element.appendChild(text);
+
+    const folder = document.createElement("h4");
+    folder.classList.add("bme-sm-settings-gap")
+    folder.innerText = "Folder:";
+    element.appendChild(folder);
+
+    const folderUrl = document.createElement("code");
+    folderUrl.classList.add("bme-sm-settings-margin");
+    folderUrl.innerText = `C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust\\RustClient_Data\\StreamingAssets\\`;
+    element.appendChild(folderUrl);
+
+    const file = document.createElement("h4");
+    file.innerText = "File:"
+    element.appendChild(file);
+
+    const fileUrl = document.createElement("code");
+    fileUrl.classList.add("bme-sm-settings-margin");
+    fileUrl.innerText = `RandomUsernames.json`;
+    element.appendChild(fileUrl);
+
+
+    const wrapper = document.createElement("div");
+    wrapper.id = "bme-sm-input-wrapper"
+    element.appendChild(wrapper)
+
+    const input = document.createElement("input");
+    input.classList.add("bme-sm-settings-gap");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.id = "bmi-file";
+    input.addEventListener("change", fileChanged)
+    wrapper.appendChild(input)
+
+    const names = localStorage.getItem("BME_SM_NAMES");
+    const lastUpdated = names ? JSON.parse(names).lastUpdated : null;
+    const status = document.createElement("div");
+    status.id = "bme-status";
+    if (lastUpdated) status.innerText = `Last updated: ${new Date(lastUpdated).toLocaleString().replace(",", "").substring(0, 16)}`;
+    wrapper.appendChild(status)
+
+    return element
+    async function fileChanged(e) {
+        const file = e.target.files && e.target.files[0];
+        const status = document.getElementById("bme-status");
+        try {
+
+
+            if (!file) {
+                status.textContent = "ERROR: No file selected."
+                return invokeChange("red");
+            };
+
+            const content = await file.text();
+            if (!content) {
+                status.innerText = "ERROR: Empty file was selected.";
+                return invokeChange("red");
+            }
+
+            const json = JSON.parse(content);
+            const names = json?.RandomUsernames;
+            if (!names || typeof (names) !== "object") {
+                status.innerText = "ERROR: Invalid file format!";
+                return invokeChange("red");
+            }
+
+            const obj = {};
+            obj.lastUpdated = Date.now();
+            obj.names = names;
+
+            localStorage.setItem("BME_SM_NAMES", JSON.stringify(obj));
+
+            invokeChange("green");
+            status.innerText = "Names were stored. Reload in 3 seconds!"
+            setTimeout(() => { status.innerText = "Names were stored. Reload in 2 seconds!" }, 1000);
+            setTimeout(() => { status.innerText = "Names were stored. Reload in 1 seconds!" }, 2000);
+            setTimeout(() => {
+                status.innerText = "Names were stored. Reloading..."
+                location.reload()
+            }, 3000);
+
+        } catch (error) {
+            status.innerText = "ERROR: Invalid file!";
+            return invokeChange("red");
+        }
+    }
+}
+
+function invokeChange(type) {
+    const settingsPage = document.getElementById("bme-sm-input-wrapper");
+    settingsPage.classList.add(`bme-sm-${type}`);
+    setTimeout(() => { settingsPage.classList.remove(`bme-sm-${type}`); }, 900);
+}
+
+
 
 
 
@@ -391,6 +586,7 @@ export function checkAndSetupSettingsIfMissing() {
     checkMainSettings();
     checkBmInfoSettings();
     checkMultiOrgSettings();
+    checkStreamerModeSettings();
 }
 
 function checkMainSettings() {
@@ -485,5 +681,20 @@ function checkMultiOrgSettings() {
 function getDefaultMultiOrgSettings() {
     const settings = {};
     settings.enabled = false;
+    return settings;
+}
+function checkStreamerModeSettings() {
+    try {
+        const bmInfoSettings = JSON.parse(localStorage.getItem("BME_STREAMER_MODE_SETTINGS"));
+        if (typeof (bmInfoSettings) !== "object") throw new Error("Settings error");
+        if (!settings.swapBattleEyeGuid) throw new Error("Settings error");
+    } catch (error) {
+        const defaultSettings = getDefaultStreamerModeSettings();
+        localStorage.setItem("BME_STREAMER_MODE_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultStreamerModeSettings() {
+    const settings = {};
+    settings.swapBattleEyeGuid = true;
     return settings;
 }

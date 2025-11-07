@@ -85,7 +85,9 @@
 }
 
 #bme-settings-body h1{
-    margin: 20px 0px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    margin-left: -8px;
 }
 #bme-settings-body h4,
 #bme-settings-body h3,
@@ -233,6 +235,79 @@
 .bme-title-row {
     gap: 30px;
 }
+
+
+.bme-key-settings-wrapper,
+.bme-key-settings-detail{
+    margin-left: 15px !important;
+}
+.bme-key-settings-wrapper {
+    display: flex;
+    gap: 5px;
+    margin-top: 3px;
+    margin-bottom: 15px;
+}
+.bme-key-settings-wrapper > input{
+    width: 500px;
+    padding: 3px 10px;
+    background: #00000030;
+    border: 1px solid #ffffff40;
+    border-radius: 3px;
+    transition: 100ms;
+    
+    outline: none;
+}
+.bme-key-settings-wrapper > input:focus{
+    background: #00000010;
+}
+.bme-key-settings-wrapper > button{
+    background: #ffffff15;
+    border: 1px solid #ffffff40;
+    border-radius: 3px;
+    outline: none;
+    transition: 100ms;
+    padding: 3px 12px;
+}
+.bme-key-settings-wrapper > button:hover{
+    background: #ffffff20;
+}
+.bme-key-settings-wrapper > button:active{
+    background: #ffffff40;
+}
+
+
+
+
+.bme-sm-settings-updater{
+    margin-left: 20px !important;
+}
+.bme-sm-settings-updater > h3{
+    margin-left: -20px !important;
+}
+.bme-sm-settings-gap{
+    margin-top: 10px !important;
+}
+.bme-sm-settings-margin{
+    margin-left: 10px !important;
+}
+#bme-sm-input-wrapper{
+    padding: 5px;
+    border-radius: 5px;
+}
+#bme-status{
+    margin-left: 20px !important;
+}
+#bme-sm-input-wrapper{
+    transition: 250ms;
+}
+.bme-sm-green{
+    background: #55FF5530;
+}
+.bme-sm-red{
+    background: #ff555530;
+}
+
+
 
 
 
