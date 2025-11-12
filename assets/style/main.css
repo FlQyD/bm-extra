@@ -113,14 +113,21 @@
 .bme-sidebar {
     width: 360px;
     max-width: 360px;
-
+    
     height: fit-content;
-
+    
     background: #222;
-
+    
     position: absolute;
     top: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
+.bme-sidebar > div:empty{
+    display: none;
+}
+
 
 .bme-sidebar-left {
     right: calc(50% + 600px);

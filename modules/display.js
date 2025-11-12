@@ -330,8 +330,8 @@ function getBanItem(banData, banId) {
 }
 
 export async function insertSidebars() {
-    const elements = document.querySelectorAll(".bme-sidebar");
-    elements.forEach(item => item.remove())
+    const elementsToRemove = document.querySelectorAll(".bme-sidebar");
+    elementsToRemove.forEach(item => item.remove())
 
     const rconElement = await getRconElement();
     const parent = rconElement?.parentNode?.parentNode;

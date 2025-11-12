@@ -19,6 +19,10 @@
             ]
         }
     ],
+    "background": {
+        "service_worker": "bg/bg.js",
+        "type": "module"
+    },
     "web_accessible_resources": [
         {
             "resources": [
@@ -40,6 +44,7 @@
     ],
     "host_permissions": [
         "*://api.battlemetrics.com/*",
-        "*://api.steampowered.com/*"
+        "*://api.steampowered.com/*",
+        "*://rust-api.flqyd.dev/*"
     ]
 }

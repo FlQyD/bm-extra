@@ -77,7 +77,6 @@ function getSettingsBody(index) {
 
 function getMainSettings() {
     const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
-    console.log(settings);
 
     const element = document.createElement("div");
     const title = document.createElement("h1");
