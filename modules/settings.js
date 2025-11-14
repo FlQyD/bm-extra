@@ -586,6 +586,7 @@ export function checkAndSetupSettingsIfMissing() {
     checkBmInfoSettings();
     checkMultiOrgSettings();
     checkStreamerModeSettings();
+    checkSidebarSettings();
 }
 
 function checkMainSettings() {
@@ -695,5 +696,31 @@ function checkStreamerModeSettings() {
 function getDefaultStreamerModeSettings() {
     const settings = {};
     settings.swapBattleEyeGuid = true;
+    return settings;
+}
+function checkSidebarSettings() {
+    try {
+        const settings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+        if (typeof (settings.friends) !== "object") throw new Error("Settings error");
+        if (!settings.friends.spot) throw new Error("Settings error");
+    } catch (error) {
+        const defaultSettings = getDefaultSidebarSettings();
+        localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultSidebarSettings() {
+    const settings = {};
+    settings.friends = {}
+    settings.friends.enabled = true;
+    settings.friends.spot = "right-slot-2"
+
+    settings.historicFriends = {}
+    settings.historicFriends.enabled = true;
+    settings.historicFriends.spot = "right-slot-3"
+
+    settings.currentTeam = {};
+    settings.currentTeam.enabled = true;
+    settings.currentTeam.spot = "left-slot-1";
+    
     return settings;
 }

@@ -15,7 +15,8 @@
             ],
             "css": [
                 "./assets/style/main.css",
-                "./assets/style/settings.css"
+                "./assets/style/settings.css",
+                "./assets/style/sidebar.css"
             ]
         }
     ],
@@ -30,6 +31,12 @@
                 "assets/img/copy.png",
                 "assets/img/copy-gray.png",
                 "assets/img/settings.png",
+                "assets/img/unknown.png",
+                "assets/img/bm-logo-small.png",
+                "assets/img/no-signal.png",
+                "assets/img/danger.png",
+                "assets/img/clear.png",
+                "assets/img/warning.png",
                 
                 "modules/display.js",
                 "modules/getInfoPanel.js",

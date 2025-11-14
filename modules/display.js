@@ -355,6 +355,217 @@ function getSidebarElement(side) {
     return element;
 }
 
+export async function insertFriendsSidebarElement(bmId, steamFriends, connectedPlayersData, connectedPlayersBanData) {
+    steamFriends = await steamFriends;
+    steamFriends.sort((a, b) => b.since- a.since)
+
+    steamFriends = steamFriends.map(item  => {
+        const steamData = getSteamData(item.steamId);
+        const banData = getSteamBanData(item.steamId);
+        return {
+            steamId: item.steamId,
+            since: item.since,
+            name: steamData ? steamData.name : item.steamId,
+            avatar: steamData ? steamData.avatar : "unknown",
+            inGame: steamData ? steamData.inGame : null,
+            setup: steamData ? steamData.setup : null,
+            online: steamData ? steamData.online : null,
+            banData
+        }
+    })
+        
+    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
+    
+    const parentElement = document.getElementById(`bme-sidebar-${sidebarSettings.friends.spot}`);
+    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${sidebarSettings.friends.spot}`}`)
+    console.log(parentElement);
+    
+    const steamFriendsContainer = getSteamFriendsContainer(steamFriends);
+    parentElement.append(steamFriendsContainer);
+    
+    function getSteamData(steamId) {
+        for (const item of connectedPlayersData) if (item.steamId === steamId) return item;
+        return null;
+    }
+    function getSteamBanData(steamId) {        
+        for (const item of connectedPlayersBanData) if (item.steamId === steamId) return item;
+        return null;
+    }
+}
+export async function updatePlayerProfileElements(cache) {
+    console.log(cache);
+    
+}
+function getSteamFriendsContainer(steamFriends) {
+    const element = document.createElement("div");
+    
+    const header = getSteamFriendHeader(steamFriends);
+    const body = getSteamFriendsBody(steamFriends)
+    element.append(header, body);
+    return element;
+}
+function getSteamFriendHeader(steamFriends) {
+    const wrapper = document.createElement("div")
+    wrapper.classList.add("bme-friendlist-header");
+
+    const title = document.createElement("h1");
+    title.innerText = `SteamFriends(${steamFriends.length}):`
+    wrapper.appendChild(title);
+
+    return wrapper;
+}
+function getSteamFriendsBody(steamFriends) {
+    const container = document.createElement("div");
+    container.classList.add("bme-friendlist-body")
+
+    for (const friend of steamFriends) {
+        const player = getPlayerElement(friend);
+        container.appendChild(player);
+    }
+
+    return container;
+}
+
+function getPlayerElement(player) {
+    console.log(player);
+    
+    const container = document.createElement("div");
+    container.title = player.steamId;
+    if (player?.origin === "origin") container.style.background = color.seenOnOrigin; //historic friend
+    if (player?.origin === "friend") container.style.background = color.seenOnFriend; //historic friend
+    container.classList.add("player-container");
+
+    const avatar = document.createElement("img");
+    avatar.src = player.avatar === "unknown" ? `https://avatars.cloudflare.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg` : `https://avatars.cloudflare.steamstatic.com/${player.avatar}_full.jpg`
+    container.appendChild(avatar);
+
+    const details = document.createElement("div");
+    details.classList.add("player-details")
+    container.appendChild(details);
+
+    const name = document.createElement("a");
+    name.href = `https://steamcommunity.com/profiles/${player.steamId}`;
+    name.target = "_blank";
+    name.innerText = player.name;
+    details.appendChild(name);
+
+    if (player.lastSeen) {
+        const lastSeen = player.lastSeen * 1000;
+
+        const lastSeenElement = document.createElement("p");
+        lastSeenElement.innerText = `Last Seen: ${getPlayerTimeString(lastSeen)}`;
+        details.appendChild(lastSeenElement);
+    }
+
+    if (player.since === 0 && player.firstSeen) {
+        const firstSeen = player.firstSeen * 1000;
+
+        const firstSeenElement = document.createElement("p");
+        firstSeenElement.innerText = `First Seen: ${getPlayerTimeString(firstSeen)}`;
+        details.appendChild(firstSeenElement);
+    }
+
+    if (player.since) {
+        const since = player.since * 1000;
+
+        const sinceElement = document.createElement("p");
+        sinceElement.innerText = `Since: ${getPlayerTimeString(since)}`;
+        details.appendChild(sinceElement)
+    }
+
+    if (player.setup === false) {
+        const warningSign = getWarningSign();
+        container.appendChild(warningSign);
+    }
+
+    const banData = getBanData(player.banData);
+    container.appendChild(banData);
+
+    const bmButton = getBmButton(player.steamId);
+    container.appendChild(bmButton);
+
+    return container;
+    function getPlayerTimeString(timestamp) {
+        return `${new Date(timestamp).toISOString().substring(0, 10)} (${Math.floor((Date.now() - timestamp) / (24 * 60 * 60 * 1000))} days)`;
+    }
+}
+function getWarningSign() {
+    const wrapper = document.createElement("div")
+    wrapper.classList.add("player-warning-wrapper");
+
+    const img = document.createElement("img");
+    img.src = chrome.runtime.getURL('/assets/img/warning.png');
+    wrapper.appendChild(img)
+
+    return wrapper;
+}
+function getBanData(banData) {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("ban-data-wrapper");
+
+    const inner = document.createElement("div");
+    inner.classList.add("ban-data-inner");
+
+    const container = document.createElement("div");
+    container.classList.add("ban-data");
+
+    let iconSrc;
+    let colorClass;
+
+    if (banData === null) {
+        colorClass = "bme-ban-gray";
+        iconSrc = '/assets/img/no-signal.png';
+    } else if (banData.gameBanCount === 0 && banData.vacBanCount === 0) {
+        colorClass = "bme-ban-green";
+        iconSrc = '/assets/img/clear.png';
+    } else {
+        colorClass = "bme-ban-red";
+        iconSrc = '/assets/img/danger.png';
+    }
+
+    container.classList.add(colorClass);
+
+    const img = document.createElement("img");
+    img.src = chrome.runtime.getURL(iconSrc);
+    container.appendChild(img);
+
+    inner.appendChild(container);
+
+    if (colorClass === "bme-ban-red") {
+        const banDetails = document.createElement("div");
+        banDetails.classList.add("ban-details");
+
+        const firstLine = document.createElement("p")
+        const words = [];
+        if (banData.vacBanCount) words.push(`${banData.vacBanCount} VAC`)
+        if (banData.gameBanCount) words.push(`${banData.gameBanCount} Game`)
+        firstLine.innerText = `${words.join(", ")} ban on record`;
+        banDetails.appendChild(firstLine);
+
+        const secondLine = document.createElement("p");
+        secondLine.innerText = `${banData.daysSinceLastBan} days since last.`
+        banDetails.appendChild(secondLine)
+
+        inner.appendChild(banDetails);
+    }
+
+    
+    wrapper.appendChild(inner);
+    return wrapper;
+}
+function getBmButton(steamId) {
+    const element = document.createElement("a");
+    element.href = `https://www.battlemetrics.com/rcon/players?filter[search]=${steamId}&redirect=1`;
+    element.target = "_blank";
+    element.classList.add("player-bm-button");
+
+    const img = document.createElement("img");
+    img.src = chrome.runtime.getURL('/assets/img/bm-logo-small.png');
+    element.appendChild(img);
+
+    return element;
+}
 
 
 let _rconElement = null;
