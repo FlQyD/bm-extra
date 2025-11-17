@@ -336,10 +336,10 @@ export async function insertSidebars() {
     const rconElement = await getRconElement();
     const parent = rconElement?.parentNode?.parentNode;
     if (!parent) return console.error("BM-EXTRA: Failed to locate parent of rconElement for sidebar placements.");
-    
+
     const left = getSidebarElement("left");
     parent.appendChild(left)
-    
+
     const right = getSidebarElement("right");
     parent.appendChild(right)
 }
@@ -349,7 +349,7 @@ function getSidebarElement(side) {
 
     for (let i = 0; i < 4; i++) {
         const slot = document.createElement("div");
-        slot.id = `bme-sidebar-${side}-slot-${i+1}`;
+        slot.id = `bme-sidebar-${side}-slot-${i + 1}`;
         element.appendChild(slot);
     }
     return element;
@@ -357,87 +357,234 @@ function getSidebarElement(side) {
 
 export async function insertFriendsSidebarElement(bmId, steamFriends, connectedPlayersData, connectedPlayersBanData) {
     steamFriends = await steamFriends;
-    steamFriends.sort((a, b) => b.since- a.since)
+    if (typeof (steamFriends) !== "string") {
+        steamFriends.sort((a, b) => b.since - a.since)
+        steamFriends = steamFriends.map(item => {
+            const steamData = getPlayerSteamData(item.steamId, connectedPlayersData);
+            const banData = getPlayerSteamBanData(item.steamId, connectedPlayersBanData);
 
-    steamFriends = steamFriends.map(item  => {
-        const steamData = getSteamData(item.steamId);
-        const banData = getSteamBanData(item.steamId);
-        return {
-            steamId: item.steamId,
-            since: item.since,
-            name: steamData ? steamData.name : item.steamId,
-            avatar: steamData ? steamData.avatar : "unknown",
-            inGame: steamData ? steamData.inGame : null,
-            setup: steamData ? steamData.setup : null,
-            online: steamData ? steamData.online : null,
-            banData
-        }
-    })
-        
+            return {
+                steamId: item.steamId,
+                since: item.since,
+                steamData, banData
+            }
+        })
+    }
+
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
-    
-    const parentElement = document.getElementById(`bme-sidebar-${sidebarSettings.friends.spot}`);
-    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${sidebarSettings.friends.spot}`}`)
-    console.log(parentElement);
-    
+
+    const spot = sidebarSettings.friends.spot
+    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
+    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+
     const steamFriendsContainer = getSteamFriendsContainer(steamFriends);
     parentElement.append(steamFriendsContainer);
-    
-    function getSteamData(steamId) {
-        for (const item of connectedPlayersData) if (item.steamId === steamId) return item;
-        return null;
-    }
-    function getSteamBanData(steamId) {        
-        for (const item of connectedPlayersBanData) if (item.steamId === steamId) return item;
-        return null;
-    }
 }
-export async function updatePlayerProfileElements(cache) {
-    console.log(cache);
-    
+export async function insertHistoricFriendsSidebarElement(bmId, historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData) {
+    steamFriends = await steamFriends;
+    if (typeof (steamFriends) === "string") steamFriends = [];
+    steamFriends = steamFriends.map(item => item.steamId);
+
+    const rustApiFriends = (await historicFriends.rustApi)
+        .filter(friend => !steamFriends.includes(friend.steamId))
+        .map(item => {
+            const steamData = getPlayerSteamData(item.steamId, connectedPlayersData);
+            const banData = getPlayerSteamBanData(item.steamId, connectedPlayersBanData);
+
+            return {
+                steamId: item.steamId,
+                origin: item.origin,
+                firstSeen: item.firstSeen,
+                lastSeen: item.lastSeen,
+                since: item.since,
+                steamData, banData
+            }
+        });
+
+    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
+
+    const spot = sidebarSettings.historicFriends.spot
+    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
+    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+
+    const steamFriendsContainer = getHistoricSteamFriendsContainer(rustApiFriends, sidebarSettings.historicFriends);
+    parentElement.append(steamFriendsContainer);
+
+}
+function getPlayerSteamData(steamId, steamData) {
+    for (const item of steamData) if (item.steamId === steamId) return item;
+    return null;
+}
+function getPlayerSteamBanData(steamId, steamBanData) {
+    for (const item of steamBanData) if (item.steamId === steamId) return item;
+    return null;
+}
+
+function getHistoricSteamFriendsContainer(historicFriends, settings) {
+    const element = document.createElement("div");
+
+    const header = getFriendlistHeader(`Historic Friends(${historicFriends.length}):`);
+    const body = getFriendlistBody(historicFriends, settings, true)
+    element.append(header, body);
+    return element;
+
 }
 function getSteamFriendsContainer(steamFriends) {
     const element = document.createElement("div");
-    
-    const header = getSteamFriendHeader(steamFriends);
-    const body = getSteamFriendsBody(steamFriends)
+    const titleText = typeof (steamFriends) === "string" ? "Steam Friends:" : `Steam Friends(${steamFriends.length}):`;
+    const header = getFriendlistHeader(titleText);
+    const body = getFriendlistBody(steamFriends)
     element.append(header, body);
     return element;
 }
-function getSteamFriendHeader(steamFriends) {
+function getFriendlistHeader(titleText) {
     const wrapper = document.createElement("div")
     wrapper.classList.add("bme-friendlist-header");
 
     const title = document.createElement("h1");
-    title.innerText = `SteamFriends(${steamFriends.length}):`
+    title.innerText = titleText;
     wrapper.appendChild(title);
 
     return wrapper;
 }
-function getSteamFriendsBody(steamFriends) {
+function getFriendlistBody(friends, settings, isHistoric) {
     const container = document.createElement("div");
     container.classList.add("bme-friendlist-body")
 
-    for (const friend of steamFriends) {
-        const player = getPlayerElement(friend);
+    const p = document.createElement("p");
+    if (friends.length === 0 || typeof(friends) === "string"){
+        p.innerText = "There are no historic friends recorded!";
+        if (isHistoric && friends.length === 0) p.innerText = "No friends were recorded.";
+        if (!isHistoric && friends.length === 0) p.innerText = "No friends yet.";
+    
+        if (friends === "ERROR") p.innerText = "Something went wrong!";
+        if (friends === "NO API KEY") p.innerText = "There was no API key.";
+        if (friends === "Private") p.innerText = "Friend list is private.";
+        container.appendChild(p);
+        return container;
+    } 
+
+    for (const friend of friends) {
+        const player = getPlayerElement(friend, settings);
         container.appendChild(player);
     }
 
     return container;
 }
 
-function getPlayerElement(player) {
+export async function insertTeaminfoSidebarElement(bmId, team, connectedPlayersData, connectedPlayersBanData) {
+    team = await team;
+    console.log(team);
+        
+    const teamMembers = team.members.map(member => {
+        const steamData = getPlayerSteamData(member, connectedPlayersData);
+        const banData = getPlayerSteamBanData(member, connectedPlayersBanData);        
+        
+        return {steamId: member, steamData, banData}
+    })
+    console.log(teamMembers);
+    
+
+    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
+
+    const spot = sidebarSettings.currentTeam.spot
+    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
+    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+
+    const element = getTeamInfoElement(team.teamId, teamMembers, team.server, team.raw);
+    parentElement.append(element);
+}
+function getTeamInfoElement(teamId, teamMembers, server, raw) {
+    const element = document.createElement("div");
+
+    const header = getTeamInfoHeader(teamId, teamMembers, server, raw);
+    const body = getTeamInfoBody(teamId, teamMembers, raw)
+    element.append(header, body);
+
+    return element;
+}
+function getTeamInfoHeader(teamId, teamMembers, serverName, raw) {
+    const header = document.createElement("div")
+    header.classList.add("bme-team-header");
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("bme-team-header-wrapper");
+    header.appendChild(wrapper)
+
+    const title = document.createElement("h1");
+    title.classList.add("bme-grow")
+    wrapper.appendChild(title);
+    title.innerText = `Current Team(${teamMembers.length}):`;
+
+
+    if (teamId.length < 6) {   
+        const id = document.createElement("h2")
+        id.innerText = isNaN(Number(teamId)) ? teamId : `ID: ${teamId}`;
+        wrapper.appendChild(id);
+    }
+
+    const copyButton = document.createElement("img");
+    copyButton.title = "Copy raw teaminfo!"
+    copyButton.src = chrome.runtime.getURL('assets/img/copy.png');
+    copyButton.addEventListener("click", () => {
+        navigator.clipboard.writeText(raw);
+    })
+    wrapper.appendChild(copyButton);
+
+    const server = document.createElement("p");
+    server.innerText = serverName;
+    header.appendChild(server)
+
+    return header;
+}
+function getTeamInfoBody(teamId, teamMembers, raw) {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("bme-team-body")
+    if (teamId === -1 || teamId === "error") {
+        const p = document.createElement("p");
+        p.innerText = teamId === -1 ? raw : "Failed to request teaminfo!";
+        
+        wrapper.appendChild(p);
+        return wrapper;
+    }
+
+    for (const member of teamMembers) {
+        const player = getPlayerElement(member);
+        wrapper.appendChild(player)
+    }
+
+    return wrapper;
+}
+
+function getPlayerElement(player, settings) {
+    const avatarValue = player.steamData?.avatar ? player.steamData.avatar : "unknown";
+    const nameValue = player.steamData?.name ? player.steamData.name : player.steamId;
+    const setupValue = player.steamData?.setup !== undefined ? player.steamData.setup : null;
     console.log(player);
     
+    const data = {} 
+    if(player.steamId) data.steamId = player.steamId;
+    if (player.lastSeen) data.lastSeen = player.lastSeen;
+    if (player.firstSeen) data.firstSeen = player.firstSeen;
+    if (player.since) data.since = player.since;
+    if (player.origin) data.origin = player.origin;
+    
     const container = document.createElement("div");
-    container.title = player.steamId;
-    if (player?.origin === "origin") container.style.background = color.seenOnOrigin; //historic friend
-    if (player?.origin === "friend") container.style.background = color.seenOnFriend; //historic friend
     container.classList.add("player-container");
+    container.dataset.save = JSON.stringify(data);
+    if (!player.steamData) container.classList.add("player-missing-data")
+    if (!player.banData) container.classList.add("player-missing-ban-data")
+    container.title = player.steamId;
+    if (player?.origin === "origin") container.style.background = settings.seenOnOrigin;
+    if (player?.origin === "friend") container.style.background = settings.seenOnFriend;
 
     const avatar = document.createElement("img");
-    avatar.src = player.avatar === "unknown" ? `https://avatars.cloudflare.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg` : `https://avatars.cloudflare.steamstatic.com/${player.avatar}_full.jpg`
+    avatar.src = avatarValue === "unknown" ?
+        `https://avatars.cloudflare.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg` : 
+        `https://avatars.cloudflare.steamstatic.com/${avatarValue}_full.jpg`;
     container.appendChild(avatar);
 
     const details = document.createElement("div");
@@ -447,7 +594,7 @@ function getPlayerElement(player) {
     const name = document.createElement("a");
     name.href = `https://steamcommunity.com/profiles/${player.steamId}`;
     name.target = "_blank";
-    name.innerText = player.name;
+    name.innerText = nameValue;
     details.appendChild(name);
 
     if (player.lastSeen) {
@@ -474,7 +621,7 @@ function getPlayerElement(player) {
         details.appendChild(sinceElement)
     }
 
-    if (player.setup === false) {
+    if (setupValue === false) {
         const warningSign = getWarningSign();
         container.appendChild(warningSign);
     }
@@ -512,16 +659,15 @@ function getBanData(banData) {
 
     let iconSrc;
     let colorClass;
-
-    if (banData === null) {
-        colorClass = "bme-ban-gray";
-        iconSrc = '/assets/img/no-signal.png';
-    } else if (banData.gameBanCount === 0 && banData.vacBanCount === 0) {
+    if (banData?.gameBanCount > 0 || banData?.vacBanCount > 0) {
+        colorClass = "bme-ban-red";
+        iconSrc = '/assets/img/danger.png';
+    } else if (banData?.gameBanCount === 0 && banData?.vacBanCount === 0) {
         colorClass = "bme-ban-green";
         iconSrc = '/assets/img/clear.png';
     } else {
-        colorClass = "bme-ban-red";
-        iconSrc = '/assets/img/danger.png';
+        colorClass = "bme-ban-gray";
+        iconSrc = '/assets/img/no-signal.png';
     }
 
     container.classList.add(colorClass);
@@ -550,7 +696,7 @@ function getBanData(banData) {
         inner.appendChild(banDetails);
     }
 
-    
+
     wrapper.appendChild(inner);
     return wrapper;
 }
@@ -567,9 +713,28 @@ function getBmButton(steamId) {
     return element;
 }
 
+export async function updatePlayerProfileElements(cache) {
+    const connectedPlayersData = cache.connectedPlayersData;
+    const connectedPlayersBanData = cache.connectedPlayersBanData;
+
+    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
+
+    const profiles = document.querySelectorAll(".player-missing-data, .player-missing-ban-data");
+    for (const profile of profiles) {
+        const playerData = JSON.parse(profile.dataset.save);
+
+        playerData.steamData = getPlayerSteamData(playerData.steamId, connectedPlayersData);
+        playerData.banData = getPlayerSteamBanData(playerData.steamId, connectedPlayersBanData);
+        
+        const playerElement = getPlayerElement(playerData, sidebarSettings);
+        profile.replaceWith(playerElement)
+    }
+}
+
 
 let _rconElement = null;
-async function getRconElement() {    
+async function getRconElement() {
     if (!_rconElement || Date.now() > (_rconElement.timestamp + 5000)) {
         _rconElement = {
             timestamp: Date.now(),
@@ -584,7 +749,7 @@ async function findRconElement() {
     let count = 0;
     while (!element) {
         count++;
-        if (count > 50) {            
+        if (count > 50) {
             console.error("BM-EXTRA: Failed to locate the RCONPlayerPage element.");
             return null;
         }

@@ -703,6 +703,8 @@ function checkSidebarSettings() {
         const settings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
         if (typeof (settings.friends) !== "object") throw new Error("Settings error");
         if (!settings.friends.spot) throw new Error("Settings error");
+        throw new Error("Settings");
+        
     } catch (error) {
         const defaultSettings = getDefaultSidebarSettings();
         localStorage.setItem("BME_SIDEBAR_SETTINGS", JSON.stringify(defaultSettings));
@@ -717,6 +719,8 @@ function getDefaultSidebarSettings() {
     settings.historicFriends = {}
     settings.historicFriends.enabled = true;
     settings.historicFriends.spot = "right-slot-3"
+    settings.historicFriends.seenOnOrigin = "#55ffff15"
+    settings.historicFriends.seenOnFriend = "#ffff5515"
 
     settings.currentTeam = {};
     settings.currentTeam.enabled = true;
