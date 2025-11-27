@@ -1,4 +1,5 @@
 console.log("EXTENSION: bm-extra loaded!")
+
 const cache = {};
 cache.connectedPlayersData = [];
 cache.connectedPlayersBanData = [];
@@ -18,7 +19,7 @@ const connectedPlayersBanData = new Proxy(cache.connectedPlayersBanData, {
     }
 });
 async function invokePlayerProfileUpdates() {
-    const { updatePlayerProfileElements } = await import(chrome.runtime.getURL('./modules/display.js'));
+    const { updatePlayerProfileElements } = await import(chrome.runtime.getURL('./modules/sidebar.js'));
     updatePlayerProfileElements(cache)
 }
 
@@ -49,38 +50,39 @@ async function main(url) {
 }
 
 async function onOverviewPage(bmId) {
-    const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
+    const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"))
     if (!settings) return console.error(`BM-EXTRA: Main settings are missing!`);
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const {
-        displaySettingsButton, displayServerActivity, displayInfoPanel, displayAvatar,
-        removeSteamInformation, insertSidebars, closeAdminLog, advancedBans, insertFriendsSidebarElement,
-        insertHistoricFriendsSidebarElement, insertTeaminfoSidebarElement
+        displaySettingsButton, displayServerActivity, displayInfoPanel,
+        displayAvatar, removeSteamInformation, closeAdminLog, advancedBans
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
     const playerCache = cache[bmId];
-    const bmProfile = playerCache.bmProfile;
-    const steamData = playerCache.steamData;
-    const bmActivity = playerCache.bmActivity;
-    const bmBanData = playerCache.bmBanData;
-    const steamFriends = playerCache.steamFriends;
-    const historicFriends = playerCache.historicFriends;
-    const team = playerCache.team;
-
+    
     displaySettingsButton();
-    if (settings.showServer) displayServerActivity(bmId, bmProfile);
-    if (settings.showInfoPanel) displayInfoPanel(bmId, bmProfile, steamData, bmActivity);
-    if (settings.showAvatarOverview) displayAvatar(bmId, bmProfile, steamData);
+    if (settings.showServer) displayServerActivity(bmId, playerCache.bmProfile);
+    if (settings.showInfoPanel) displayInfoPanel(bmId, playerCache.bmProfile, playerCache.steamData, playerCache.bmActivity);
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
-    if (settings.advancedBans) advancedBans(bmId, bmBanData);
+    if (settings.advancedBans) advancedBans(bmId, playerCache.bmBanData);
     if (settings.closeAdminLog) closeAdminLog(bmId);
+    if (settings.maxNames > 0) null;
+    if (settings.maxIps > 0) null;
+
+    const {
+        insertSidebars, insertFriendsSidebarElement,
+        insertHistoricFriendsSidebarElement, insertTeaminfoSidebarElement,
+        insertPublicBansSidebarElement
+    } = await import(chrome.runtime.getURL('./modules/sidebar.js'));
 
     await insertSidebars();
-    if (sidebarSettings.friends.enabled) insertFriendsSidebarElement(bmId, steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (sidebarSettings.historicFriends.enabled) insertHistoricFriendsSidebarElement(bmId, historicFriends, steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (sidebarSettings.currentTeam.enabled) insertTeaminfoSidebarElement(bmId, team, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (sidebarSettings.friends.enabled) insertFriendsSidebarElement(bmId, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (sidebarSettings.historicFriends.enabled) insertHistoricFriendsSidebarElement(bmId, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (sidebarSettings.currentTeam.enabled) insertTeaminfoSidebarElement(bmId, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (sidebarSettings.publicBans.enabled) insertPublicBansSidebarElement(bmId, playerCache.publicBans);
 }
 async function onIdentifierPage(bmId, bmProfile, steamData, bmActivity) {
 
@@ -97,6 +99,7 @@ function setupCacheFor(bmId) {
     cache[bmId].historicFriends = {}
     cache[bmId].historicFriends.rustApi = getSteamFriends(cache[bmId].bmProfile, "rust-api");
     cache[bmId].team = getCurrentTeam(cache[bmId].bmProfile);
+    cache[bmId].publicBans = getPublicBans(cache[bmId].bmProfile);
     //cache.historicFriends.steamidCom
     //cache.historicFriends.steamidUk
 
@@ -167,6 +170,8 @@ async function getSteamFriends(bmProfile, type) {
         return null;
     }
 
+    const { getSteamFriendlistFromSteam, getSteamFriendlistFromRustApi } = await import(chrome.runtime.getURL('./modules/misc.js'));
+
     if (type === "steam") return getSteamFriendlistFromSteam(steamId);
     if (type === "rust-api") return getSteamFriendlistFromRustApi(steamId);
     return undefined;
@@ -174,13 +179,12 @@ async function getSteamFriends(bmProfile, type) {
 async function getSteamFriendlistFromSteam(steamId) {
     try {
         const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
-        if (!STEAM_API_KEY) return "NO API KEY";
+        if (!STEAM_API_KEY) return "NO_API_KEY";
 
         let value = null;
         chrome.runtime.onMessage.addListener(function (response) {
             if (response.type !== "BME_STEAM_FRIENDLIST_RESOLVED") return;
             if (response.status === "ERROR") throw new Error(`Failed to request steam friends: \n  ${response.message}`);
-            console.log(response);
 
             value = response.value;
         })
@@ -196,7 +200,7 @@ async function getSteamFriendlistFromSteam(steamId) {
 async function getSteamFriendlistFromRustApi(steamId) {
     try {
         const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
-        if (!RUST_API_KEY) return "NO API KEY";
+        if (!RUST_API_KEY) return "NO_API_KEY";
 
         let value = null;
         chrome.runtime.onMessage.addListener(function (response) {
@@ -243,7 +247,7 @@ async function requestAndProcessPlayerData(players) {
 async function getPlayerSummariesFromSteam(steamIds) {
     try {
         const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
-        if (!STEAM_API_KEY) return "NO API KEY";
+        if (!STEAM_API_KEY) return "NO_API_KEY";
 
         const requestId = Math.floor(Math.random() * 100000);
 
@@ -272,7 +276,7 @@ async function requestAndProcessPlayerBanData(players) {
 async function getBanSummariesFromSteam(steamIds) {
     try {
         const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
-        if (!STEAM_API_KEY) return "NO API KEY";
+        if (!STEAM_API_KEY) return "NO_API_KEY";
 
         const requestId = Math.floor(Math.random() * 100000);
 
@@ -457,6 +461,35 @@ async function getBrTeamInfo(steamId, serverId, authToken) {
     return result;
 }
 
+async function getPublicBans(bmProfile) {
+    bmProfile = await bmProfile;
+    const steamId = getSteamIdFromBmProfile(bmProfile)
+
+    return requestPublicBansFor(steamId);
+}
+async function requestPublicBansFor(steamId) {
+    try {
+        const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
+        if (!RUST_API_KEY) return "NO_API_KEY";
+
+        let value = null;
+        chrome.runtime.onMessage.addListener(function (response) {
+            if (response.type !== `BME_PUBLIC_BANS_RESOLVED`) return;
+            if (response.status === "ERROR") throw new Error(`Failed to request public bans for ${steamId}: \n  ${response.message}`);
+
+            value = response.value;
+        })
+
+        chrome.runtime.sendMessage({ type: `BME_PUBLIC_BANS`, subject: steamId, apiKey: RUST_API_KEY });
+        while (!value) await new Promise(r => { setTimeout(r, 10); })
+        return value;
+    } catch (error) {
+        console.log(error);
+        return "ERROR";
+    }
+
+}
+
 
 function getSteamIdFromBmProfile(bmProfile) {
     const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");
@@ -476,3 +509,4 @@ function getAuthToken() {
 
     return authToken;
 }
+

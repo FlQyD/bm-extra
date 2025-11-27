@@ -24,7 +24,7 @@ function getSettingsPage() {
     body.id = "bme-settings-body";
     page.appendChild(body);
 
-    const content = getSettingsBody(4);
+    const content = getSettingsBody(0);
     body.appendChild(content);
 
     return bg;
@@ -33,7 +33,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Settings", "Overview", "Identifier", "BM Information", "Streamer Mode", "Multi Org", "Evasion Checker", "API Keys"];
+    const menuPoints = ["Overview", "Identifier", "BM Information", "Streamer Mode", "Multi Org", "Evasion Checker", "API Keys"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -65,84 +65,14 @@ function getSettingsMenu() {
 }
 
 function getSettingsBody(index) {
-    if (index === 0) return getMainSettings();
-    if (index === 1) return getOverviewSettings();
-    if (index === 2) return getIdentifierSettings();
-    if (index === 3) return getBmInfoSettings();
-    if (index === 4) return getStreamerModeSettings();
-    if (index === 5) return getMultiOrgSettings();
-    if (index === 6) return getMultiOrgSettings(); //Evasion Checker
-    if (index === 7) return getApiKeysSettings(); //
+    if (index === 0) return getOverviewSettings();
+    if (index === 1) return getIdentifierSettings();
+    if (index === 2) return getBmInfoSettings();
+    if (index === 3) return getStreamerModeSettings();
+    if (index === 4) return getMultiOrgSettings();
+    if (index === 5) return getMultiOrgSettings(); //Evasion Checker
+    if (index === 6) return getApiKeysSettings();
 }
-
-function getMainSettings() {
-    const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
-
-    const element = document.createElement("div");
-    const title = document.createElement("h1");
-    title.innerText = "Main Settings";
-    element.appendChild(title);
-
-    const showAvatarOverviewRow = getMainSettingsInputRowElement(settings, "showAvatarOverview", "Show Avatar on Overview Page", "Shows the players avatar when it's available next to his name.");
-    element.appendChild(showAvatarOverviewRow);
-
-    const showAvatarIdentifierRow = getMainSettingsInputRowElement(settings, "showAvatarIdentifier", "Show Avatar on Identifier Page", "Shows the players avatar when it's available next to his name.");
-    element.appendChild(showAvatarIdentifierRow);
-
-    const showInfoPanel = getMainSettingsInputRowElement(settings, "showInfoPanel", "Show BM Information", "Shows detailed information that is stored by battlemetrics and usually not visible by default.");
-    element.appendChild(showInfoPanel);
-
-    const removeSteamInfo = getMainSettingsInputRowElement(settings, "removeSteamInfo", "Remove Steam Information", "Remove the default Steam information panel from the battlemetrics RCON profile when it appears.");
-    element.appendChild(removeSteamInfo);
-
-    const showServer = getMainSettingsInputRowElement(settings, "showServer", "Show server", "Show either the current or the last server the user has played on, as well as displaying connection details.");
-    element.appendChild(showServer);
-
-    const advancedBans = getMainSettingsInputRowElement(settings, "advancedBans", "Advanced Bans", "Update ban reasons for a more readable format.");
-    element.appendChild(advancedBans);
-
-    const closeAdminLog = getMainSettingsInputRowElement(settings, "closeAdminLog", "Close Admin Log", "Close admin log by default when opening a battlemetrics profile.");
-    element.appendChild(closeAdminLog);
-
-
-    const button = getResetButton("bm-main");
-    element.appendChild(button);
-
-    return element;
-}
-function getMainSettingsInputRowElement(settings, settingsName, settingsTitle, description) {
-    const row = document.createElement("div");
-    row.className = "bme-settings-row";
-
-    const firstRow = document.createElement("div");
-
-    const input = document.createElement("input");
-    input.classList.add("bme-toggle-input")
-    input.type = "checkbox";
-    input.checked = settings[settingsName];
-    firstRow.appendChild(input);
-
-    input.addEventListener("change", e => { switchMainSettingsTo(settingsName, e.target.checked) })
-
-    const title = document.createElement("h3");
-    title.className = "bme-settings-title";
-    title.textContent = settingsTitle;
-    firstRow.appendChild(title)
-
-    const desc = document.createElement("p");
-    desc.className = "bme-settings-description";
-    desc.textContent = description;
-
-    row.append(firstRow, desc);
-    return row;
-}
-function switchMainSettingsTo(id, value) {
-    const settings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"))
-    settings[id] = value;
-    localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(settings));
-}
-
-
 
 function getIdentifierSettings() {
     const element = document.createElement("div");
@@ -162,6 +92,57 @@ function getOverviewSettings() {
     title.innerText = "Overview Settings";
     element.appendChild(title);
 
+    const settingsBucket = "BME_OVERVIEW_SETTINGS";
+    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+    
+    const showAvatarToggle = getToggleSettingsElement(
+        "Show avatar on page",
+        "Shows the players avatar when it's available next to his name", 
+        null, settingsBucket, "showAvatar", settings.showAvatar
+    )
+    const showBmInfoPanel = getToggleSettingsElement(
+        "Show BM Information",
+        "Shows detailed information that is stored by battlemetrics and usually not visible by default",
+        null, settingsBucket, "showInfoPanel", settings.showInfoPanel
+    );
+    const removeSteamInfo = getToggleSettingsElement(
+        "Remove Steam Information",
+        "Remove the default Steam information panel from the battlemetrics RCON profile when it appears",
+        null, settingsBucket, "removeSteamInfo", settings.removeSteamInfo,
+    );
+    const showServer = getToggleSettingsElement(
+        "Show server",
+        "Show either the current or the last server the user has played on, as well as displaying connection details",
+        null, settingsBucket, "showServer", settings.showServer
+    )
+    const advancedBans = getToggleSettingsElement(
+        "Advanced Bans",
+        "Update ban reasons for a more readable format",
+        null, settingsBucket, "advancedBans", settings.advancedBans
+    )
+    const closeAdminLog = getToggleSettingsElement(
+        "Close Admin Log",
+        "Close admin log by default when opening a battlemetrics profile.",
+        null, settingsBucket, "closeAdminLog", settings.closeAdminLog
+    )
+    const maxNamesOnProfile = getNumberSettingsElement(
+        "Maximum names:",
+        "The maximum number of names allowed to be showed in the overview section.",
+        null, settingsBucket, "maxNames", settings.maxNames
+    )
+    const maxIpsOnProfile = getNumberSettingsElement(
+        "Maximum IP addresses:",
+        "The maximum number of IP addresses allowed to be showed in the overview section.",
+        null, settingsBucket, "maxIps", settings.maxIps
+    )
+    const resetButton = getResetButton("bm-overview");
+
+    element.append(
+        showAvatarToggle, showBmInfoPanel, removeSteamInfo, showServer,
+        advancedBans, closeAdminLog, maxNamesOnProfile, maxIpsOnProfile,
+
+        resetButton
+    );
 
     return element;
 }
@@ -440,9 +421,10 @@ function getResetButton(type) {
 
         target.innerText = "Reloading...";
         target.classList.add("bme-button-green-background")
-
+        
         if (type === "bm-main") localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(getDefaultMainSettings()));
         if (type === "bm-info") localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(getDefaultBmInfoSettings()));
+        if (type === "bm-overview") localStorage.setItem("BME_OVERVIEW_SETTINGS", JSON.stringify(getDefaultOverviewSettings()));
 
 
 
@@ -578,11 +560,79 @@ function invokeChange(type) {
 
 
 
+function getNumberSettingsElement(title, description, requirements, settingsBucket, settingsName, currentValue) {
+    const element = document.createElement("div");
+    element.className = "bme-settings-row";
 
+    const firstRow = document.createElement("div");
+
+    const titleElement = document.createElement("h3");
+    titleElement.className = "bme-settings-title";
+    titleElement.textContent = title;
+    
+    const input = document.createElement("input");
+    input.classList.add("bme-settings-number-input")
+    input.value = currentValue;
+    firstRow.append(titleElement, input)
+
+    input.addEventListener("change", e => { 
+        const value = e.target.value;
+        try {
+            if (isNaN(Number(value))) throw new Error("Input value must be a number.");
+            if (value < -1) throw new Error("Minimum value is -1");
+
+            setSettingTo(settingsBucket, settingsName, value) 
+            e.target.classList.add("bme-sm-green")
+            setTimeout(() => { e.target.classList.remove("bme-sm-green") }, 400);
+        } catch (error) {
+            console.log(error);
+            e.target.classList.add("bme-sm-red")
+            setTimeout(() => {e.target.classList.remove("bme-sm-red") }, 400);
+        }
+    })
+
+    const desc = document.createElement("p");
+    desc.className = "bme-settings-description";
+    desc.textContent = description;
+
+    element.append(firstRow, desc)
+    return element;
+}
+function getToggleSettingsElement(title, description, requirements, settingsBucket, settingsName, currentValue) {
+    const element = document.createElement("div");
+    element.className = "bme-settings-row";
+
+    const firstRow = document.createElement("div");
+
+    const input = document.createElement("input");
+    input.classList.add("bme-toggle-input")
+    input.type = "checkbox";
+    input.checked = currentValue;
+
+    input.addEventListener("change", e => { setSettingTo(settingsBucket, settingsName, e.target.checked) })
+
+    const titleElement = document.createElement("h3");
+    titleElement.className = "bme-settings-title";
+    titleElement.textContent = title;
+    firstRow.append(input, titleElement)
+
+    const desc = document.createElement("p");
+    desc.className = "bme-settings-description";
+    desc.textContent = description;
+
+    element.append(firstRow, desc)
+    return element;
+}
+function setSettingTo(settingsBucket, settingsName, settingsValue) {
+    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+    settings[settingsName] = settingsValue;
+    localStorage.setItem(settingsBucket, JSON.stringify(settings));
+}
 
 
 export function checkAndSetupSettingsIfMissing() {
     checkMainSettings();
+    checkOverviewSettings();
     checkBmInfoSettings();
     checkMultiOrgSettings();
     checkStreamerModeSettings();
@@ -593,13 +643,7 @@ function checkMainSettings() {
     try {
         const mainSettings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"));
         if (typeof (mainSettings) !== "object") throw new Error("Settings error");
-        if (typeof (mainSettings.showServer) !== "boolean") throw new Error("Settings error");
-        if (typeof (mainSettings.showInfoPanel) !== "boolean") throw new Error("Settings error");
-        if (typeof (mainSettings.showAvatarOverview) !== "boolean") throw new Error("Settings error");
         if (typeof (mainSettings.showAvatarIdentifier) !== "boolean") throw new Error("Settings error");
-        if (typeof (mainSettings.removeSteamInfo) !== "boolean") throw new Error("Settings error");
-        if (typeof (mainSettings.advancedBans) !== "boolean") throw new Error("Settings error");
-        if (typeof (mainSettings.closeAdminLog) !== "boolean") throw new Error("Settings error");
     } catch (error) {
         const defaultSettings = getDefaultMainSettings();
         localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(defaultSettings));
@@ -607,13 +651,36 @@ function checkMainSettings() {
 }
 function getDefaultMainSettings() {
     const settings = {};
+    settings.showAvatarIdentifier = false;
+    return settings;
+}
+function checkOverviewSettings() {
+    try {
+        const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"));
+        if (typeof (settings) !== "object") throw new Error("Settings error");
+        if (typeof (settings.showAvatar) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.showServer) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.showInfoPanel) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.removeSteamInfo) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.advancedBans) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.closeAdminLog) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.maxNames) !== "number") throw new Error("Settings error");
+        if (typeof (settings.maxIps) !== "number") throw new Error("Settings error");
+    } catch (error) {
+        const defaultSettings = getDefaultOverviewSettings();
+        localStorage.setItem("BME_OVERVIEW_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultOverviewSettings() {
+    const settings = {};
+    settings.showAvatar = true;
     settings.showServer = true;
     settings.showInfoPanel = true;
-    settings.showAvatarOverview = true;
-    settings.showAvatarIdentifier = false;
     settings.removeSteamInfo = true;
     settings.advancedBans = true;
     settings.closeAdminLog = true;
+    settings.maxNames = -1;
+    settings.maxIps = -1;
     return settings;
 }
 function checkBmInfoSettings() {
@@ -725,6 +792,10 @@ function getDefaultSidebarSettings() {
     settings.currentTeam = {};
     settings.currentTeam.enabled = true;
     settings.currentTeam.spot = "left-slot-1";
+
+    settings.publicBans = {}
+    settings.publicBans.enabled = true;
+    settings.publicBans.spot = "left-slot-2";
     
     return settings;
 }

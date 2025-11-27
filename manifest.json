@@ -27,21 +27,13 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "assets/img/arrow.png",
-                "assets/img/copy.png",
-                "assets/img/copy-gray.png",
-                "assets/img/settings.png",
-                "assets/img/unknown.png",
-                "assets/img/bm-logo-small.png",
-                "assets/img/no-signal.png",
-                "assets/img/danger.png",
-                "assets/img/clear.png",
-                "assets/img/warning.png",
+                "assets/img/*.png",
+                "*.js",
                 
+                "modules/misc.js",
                 "modules/display.js",
                 "modules/getInfoPanel.js",
-                "modules/settings.js",
-                "modules/misc.js"
+                "modules/settings.js"
             ],
             "matches": [
                 "*://www.battlemetrics.com/*",

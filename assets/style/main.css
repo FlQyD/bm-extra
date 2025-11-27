@@ -102,7 +102,16 @@
 .bme-grow{
     flex-grow: 1;
 }
+.bme-bold{
+    font-weight: 600;
+}
 
+.bme-sidebar-ban-details{
+    display: flex;
+
+    gap: 25px;
+    padding-right: 25px;
+}
 
 
 

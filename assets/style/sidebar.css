@@ -113,6 +113,7 @@ body {
 }
 
 .player-warning-wrapper {
+    min-width: 30px;
     width: 30px;
     height: 60px;
 
@@ -149,7 +150,7 @@ body {
 }
 
 .ban-details>p {
-    width: 185px !important;
+    width: 200px !important;
     font-size: 14px !important;
 }
 
@@ -162,7 +163,7 @@ body {
     position: absolute;
     top: 2.5px;
     left: 0;
-    width: 200px;
+    width: 220px;
     height: 55px;
 
     background: #8e2121;
@@ -186,11 +187,12 @@ body {
 }
 
 .ban-data-wrapper:hover .ban-details {
-    transform: translateX(-200px);
+    transform: translateX(-220px);
     opacity: 1;
     pointer-events: auto;
 }
 
+.bme-sidebar-bans-wrapper,
 .bme-team-header-wrapper {
     display: flex;
     height: 40px;
@@ -199,23 +201,24 @@ body {
     padding: 0px 10px;
     gap: 10px;
 }
-.bme-team-header-wrapper > h1{
-    min-width: 120px;
-}
-.bme-team-header-wrapper > h1,
-.bme-team-header-wrapper > h2,
-.player-details > p,
+
+.bme-sidebar-bans-header>h1,
+.bme-team-header-wrapper>h1,
+.bme-team-header-wrapper>h2,
+.player-details>p,
 .bme-team-header p {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .bme-team-header p {
     padding-left: 15px;
     padding-bottom: 5px;
     margin: 0;
 }
 
+.bme-sidebar-bans-header>h1,
 .bme-team-header-wrapper h2,
 .bme-team-header-wrapper h1,
 .bme-team-header-wrapper p {
@@ -223,6 +226,7 @@ body {
     margin: 0;
 }
 
+.bme-sidebar-bans-wrapper>h1,
 .bme-team-header-wrapper h1 {
     font-size: 23px;
 }
@@ -258,10 +262,48 @@ body {
 
     padding-bottom: 3px;
 }
+
+.bme-public-bans-body>p,
 .bme-friendlist-body>p,
 .bme-team-body>p {
     padding: 5px 25px;
     font-size: 18px;
     line-height: 1;
     margin: 0;
+}
+
+.bme-public-bans-body p {
+    line-height: 1;
+}
+
+.bme-public-bans-body {
+    display: flex;
+    flex-direction: column;
+
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.bme-sidebar-ban-element {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+    margin-left: 25px;
+}
+
+.bme-sidebar-ban-element p {
+    font-size: 15px;
+    margin: 0;
+}
+
+.bme-sidebar-ban-reason {
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-clamp: 2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
