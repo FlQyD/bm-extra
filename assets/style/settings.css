@@ -237,6 +237,12 @@
     gap: 30px;
 }
 
+.bme-settings-requirements{
+    color: #ff5555;
+    margin-left: 20px !important;
+
+}
+
 
 .bme-key-settings-wrapper,
 .bme-key-settings-detail{
@@ -280,6 +286,7 @@
 
 
 .bme-sm-settings-updater{
+    margin-top: 30px;
     margin-left: 20px !important;
 }
 .bme-sm-settings-updater > h3{

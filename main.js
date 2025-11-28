@@ -52,15 +52,15 @@ async function main(url) {
 async function onOverviewPage(bmId) {
     const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"))
     if (!settings) return console.error(`BM-EXTRA: Main settings are missing!`);
-    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const {
         displaySettingsButton, displayServerActivity, displayInfoPanel,
-        displayAvatar, removeSteamInformation, closeAdminLog, advancedBans
+        displayAvatar, removeSteamInformation, closeAdminLog, advancedBans,
+        limitItem, swapBattleEyeGuid
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
     const playerCache = cache[bmId];
+    sidebar(bmId, playerCache)
     
     displaySettingsButton();
     if (settings.showServer) displayServerActivity(bmId, playerCache.bmProfile);
@@ -69,8 +69,23 @@ async function onOverviewPage(bmId) {
     if (settings.removeSteamInfo) removeSteamInformation(bmId);
     if (settings.advancedBans) advancedBans(bmId, playerCache.bmBanData);
     if (settings.closeAdminLog) closeAdminLog(bmId);
-    if (settings.maxNames > 0) null;
-    if (settings.maxIps > 0) null;
+    if (settings.swapBattleEyeGuid) swapBattleEyeGuid(bmId, playerCache.bmProfile);
+    if (settings.maxNames > 0) limitItem(settings.maxNames, "Name");
+    if (settings.maxIps > 0) limitItem(settings.maxNames, "IP");
+}
+async function onIdentifierPage(bmId) {
+    const playerCache = cache[bmId];
+    sidebar(bmId, playerCache)
+
+    const {
+        swapBattleEyeGuid
+    } = await import(chrome.runtime.getURL('./modules/display.js'));
+
+    swapBattleEyeGuid(bmId, playerCache.bmProfile);
+}
+async function sidebar(bmId, playerCache) {
+    const settings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!settings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const {
         insertSidebars, insertFriendsSidebarElement,
@@ -79,14 +94,13 @@ async function onOverviewPage(bmId) {
     } = await import(chrome.runtime.getURL('./modules/sidebar.js'));
 
     await insertSidebars();
-    if (sidebarSettings.friends.enabled) insertFriendsSidebarElement(bmId, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (sidebarSettings.historicFriends.enabled) insertHistoricFriendsSidebarElement(bmId, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (sidebarSettings.currentTeam.enabled) insertTeaminfoSidebarElement(bmId, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (sidebarSettings.publicBans.enabled) insertPublicBansSidebarElement(bmId, playerCache.publicBans);
+    if (settings.friends.enabled) insertFriendsSidebarElement(bmId, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (settings.historicFriends.enabled) insertHistoricFriendsSidebarElement(bmId, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (settings.currentTeam.enabled) insertTeaminfoSidebarElement(bmId, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (settings.publicBans.enabled) insertPublicBansSidebarElement(bmId, playerCache.publicBans);
 }
-async function onIdentifierPage(bmId, bmProfile, steamData, bmActivity) {
 
-}
+
 
 
 function setupCacheFor(bmId) {

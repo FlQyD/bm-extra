@@ -94,7 +94,9 @@
 
 
 
-
+.bme-hidden{
+    display: none;
+}
 .bme-flex {
     display: flex;
     align-items: center;

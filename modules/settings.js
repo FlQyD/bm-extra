@@ -33,7 +33,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Overview", "Identifier", "BM Information", "Streamer Mode", "Multi Org", "Evasion Checker", "API Keys"];
+    const menuPoints = ["Overview", "Identifier", "BM Information", /*"Multi Org", "Evasion Checker",*/ "API Keys"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -68,10 +68,7 @@ function getSettingsBody(index) {
     if (index === 0) return getOverviewSettings();
     if (index === 1) return getIdentifierSettings();
     if (index === 2) return getBmInfoSettings();
-    if (index === 3) return getStreamerModeSettings();
-    if (index === 4) return getMultiOrgSettings();
-    if (index === 5) return getMultiOrgSettings(); //Evasion Checker
-    if (index === 6) return getApiKeysSettings();
+    if (index === 3) return getApiKeysSettings();
 }
 
 function getIdentifierSettings() {
@@ -125,6 +122,11 @@ function getOverviewSettings() {
         "Close admin log by default when opening a battlemetrics profile.",
         null, settingsBucket, "closeAdminLog", settings.closeAdminLog
     )
+    const swapBattleEyeGuid = getToggleSettingsElement(
+        "Swap BattlEye GUID",
+        "Swap BattlEye GUID to the player's streamer mode name",
+        ["SM Names"], settingsBucket, "swapBattleEyeGuid", settings.swapBattleEyeGuid
+    )
     const maxNamesOnProfile = getNumberSettingsElement(
         "Maximum names:",
         "The maximum number of names allowed to be showed in the overview section.",
@@ -139,7 +141,9 @@ function getOverviewSettings() {
 
     element.append(
         showAvatarToggle, showBmInfoPanel, removeSteamInfo, showServer,
-        advancedBans, closeAdminLog, maxNamesOnProfile, maxIpsOnProfile,
+        advancedBans, closeAdminLog, swapBattleEyeGuid, 
+        maxNamesOnProfile, maxIpsOnProfile,
+        
 
         resetButton
     );
@@ -307,36 +311,6 @@ function getBarrierSettingsRow(settings, settingsName, settingsTitle, settingsDe
 
 
 
-function getMultiOrgSettings() {
-    const element = document.createElement("div");
-
-    const titleRow = document.createElement("div");
-    titleRow.classList.add("bme-flex", "bme-title-row")
-    element.appendChild(titleRow);
-
-    const title = document.createElement("h1");
-    title.innerText = "Multi Org Settings";
-    titleRow.appendChild(title);
-
-    const settings = JSON.parse(localStorage.getItem("BME_MULTI_ORG_SETTINGS"))
-
-    const enableInput = document.createElement("input");
-    enableInput.type = "checkbox";
-    enableInput.classList.add("bme-toggle-input");
-    titleRow.appendChild(enableInput);
-
-    enableInput.addEventListener("change", e => {
-        console.log(e.target.checked);
-
-    })
-
-
-
-    return element;
-}
-
-
-
 function getApiKeysSettings() {
     const element = document.createElement("div");
 
@@ -351,7 +325,9 @@ function getApiKeysSettings() {
     const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api");
     const steamKeyElement = getApiKeyDiv("Steam API Key:", "BME_STEAM_API_KEY", "steam-api");
     const rustApiKeyElement = getApiKeyDiv("Rust API Key:", "BME_RUST_API_KEY", "rust-api");
-    element.append(battleMetricsKeyElements, steamKeyElement, rustApiKeyElement);
+    const updater = getSmUpdater();
+
+    element.append(battleMetricsKeyElements, steamKeyElement, rustApiKeyElement, updater);
 
 
     return element;
@@ -399,67 +375,12 @@ function getApiKeyDiv(titleText, value, id) {
 function getKeyDetailContent(key) {
     return key ? `Your key starts with: ${key.substring(0, 10)}` : "You have no key saved yet.";
 }
-function getResetButton(type) {
-    const wrap = document.createElement("div");
-    wrap.id = "bme-reset-button-wrapper";
-
-    const button = document.createElement("button");
-    button.innerText = "Reset Settings";
-    wrap.appendChild(button)
-
-    button.addEventListener("click", e => {
-        const target = e.target;
-
-        if (target.innerText === "Reset Settings") {
-            target.innerText = "Confirm"
-            setTimeout(() => {
-                if (target.innerText !== "Confirm") return;
-                target.innerText = "Reset Settings";
-            }, 1500);
-            return;
-        }
-
-        target.innerText = "Reloading...";
-        target.classList.add("bme-button-green-background")
-        
-        if (type === "bm-main") localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(getDefaultMainSettings()));
-        if (type === "bm-info") localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(getDefaultBmInfoSettings()));
-        if (type === "bm-overview") localStorage.setItem("BME_OVERVIEW_SETTINGS", JSON.stringify(getDefaultOverviewSettings()));
-
-
-
-        location.reload();
-    })
-
-
-    return wrap;
-}
-
-function getStreamerModeSettings() {
-    const element = document.createElement("div");
-
-    const titleRow = document.createElement("div");
-    titleRow.classList.add("bme-flex", "bme-title-row")
-    element.appendChild(titleRow);
-
-    const title = document.createElement("h1");
-    title.innerText = "Streamer Mode Settings:";
-    titleRow.appendChild(title);
-
-    const updater = getSmUpdater();
-    element.appendChild(updater);
-
-
-
-    return element;
-}
-
 function getSmUpdater() {
     const element = document.createElement("div");
     element.classList.add("bme-sm-settings-updater")
 
     const title = document.createElement("h3");
-    title.innerText = "Stored Names:";
+    title.innerText = "Stored Steamer Mode Names:";
     element.appendChild(title);
 
     const text = document.createElement("p");
@@ -468,7 +389,7 @@ function getSmUpdater() {
 
     const folder = document.createElement("h4");
     folder.classList.add("bme-sm-settings-gap")
-    folder.innerText = "Folder:";
+    folder.innerText = "Default folder:";
     element.appendChild(folder);
 
     const folderUrl = document.createElement("code");
@@ -485,7 +406,6 @@ function getSmUpdater() {
     fileUrl.innerText = `RandomUsernames.json`;
     element.appendChild(fileUrl);
 
-
     const wrapper = document.createElement("div");
     wrapper.id = "bme-sm-input-wrapper"
     element.appendChild(wrapper)
@@ -498,11 +418,15 @@ function getSmUpdater() {
     input.addEventListener("change", fileChanged)
     wrapper.appendChild(input)
 
-    const names = localStorage.getItem("BME_SM_NAMES");
-    const lastUpdated = names ? JSON.parse(names).lastUpdated : null;
+    let smData = null;
+    try {
+        smData = JSON.parse(localStorage.getItem("BME_SM_NAMES"))   
+    } catch (error) {};    
+
+    const lastUpdated = smData ? smData.lastUpdated : null;
     const status = document.createElement("div");
     status.id = "bme-status";
-    if (lastUpdated) status.innerText = `Last updated: ${new Date(lastUpdated).toLocaleString().replace(",", "").substring(0, 16)}`;
+    if (lastUpdated) status.innerText = `Last updated: ${new Date(lastUpdated).toLocaleString().replace(",", "").substring(0, 16)} | ${smData.names.length} names stored!`;
     wrapper.appendChild(status)
 
     return element
@@ -551,7 +475,6 @@ function getSmUpdater() {
         }
     }
 }
-
 function invokeChange(type) {
     const settingsPage = document.getElementById("bme-sm-input-wrapper");
     settingsPage.classList.add(`bme-sm-${type}`);
@@ -581,7 +504,7 @@ function getNumberSettingsElement(title, description, requirements, settingsBuck
             if (isNaN(Number(value))) throw new Error("Input value must be a number.");
             if (value < -1) throw new Error("Minimum value is -1");
 
-            setSettingTo(settingsBucket, settingsName, value) 
+            setSettingTo(settingsBucket, settingsName, Number(value)) 
             e.target.classList.add("bme-sm-green")
             setTimeout(() => { e.target.classList.remove("bme-sm-green") }, 400);
         } catch (error) {
@@ -621,21 +544,64 @@ function getToggleSettingsElement(title, description, requirements, settingsBuck
     desc.textContent = description;
 
     element.append(firstRow, desc)
+
+    if (requirements) {
+        const reqs = document.createElement("p");
+        reqs.classList.add("bme-settings-requirements");
+        reqs.innerText = `REQUIRED: ${requirements.join(" | ")}`;
+        element.append(reqs);
+    }
     return element;
 }
 function setSettingTo(settingsBucket, settingsName, settingsValue) {
+    console.log(settingsBucket, settingsName, settingsValue);
+    
     const settings = JSON.parse(localStorage.getItem(settingsBucket));
     settings[settingsName] = settingsValue;
     localStorage.setItem(settingsBucket, JSON.stringify(settings));
 }
+function getResetButton(type) {
+    const wrap = document.createElement("div");
+    wrap.id = "bme-reset-button-wrapper";
+
+    const button = document.createElement("button");
+    button.innerText = "Reset Settings";
+    wrap.appendChild(button)
+
+    button.addEventListener("click", e => {
+        const target = e.target;
+
+        if (target.innerText === "Reset Settings") {
+            target.innerText = "Confirm"
+            setTimeout(() => {
+                if (target.innerText !== "Confirm") return;
+                target.innerText = "Reset Settings";
+            }, 1500);
+            return;
+        }
+
+        target.innerText = "Reloading...";
+        target.classList.add("bme-button-green-background")
+
+        if (type === "bm-main") localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(getDefaultMainSettings()));
+        if (type === "bm-info") localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(getDefaultBmInfoSettings()));
+        if (type === "bm-overview") localStorage.setItem("BME_OVERVIEW_SETTINGS", JSON.stringify(getDefaultOverviewSettings()));
+
+
+
+        location.reload();
+    })
+
+
+    return wrap;
+}
+
 
 
 export function checkAndSetupSettingsIfMissing() {
     checkMainSettings();
     checkOverviewSettings();
     checkBmInfoSettings();
-    checkMultiOrgSettings();
-    checkStreamerModeSettings();
     checkSidebarSettings();
 }
 
@@ -664,6 +630,7 @@ function checkOverviewSettings() {
         if (typeof (settings.removeSteamInfo) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.advancedBans) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.closeAdminLog) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.swapBattleEyeGuid) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.maxNames) !== "number") throw new Error("Settings error");
         if (typeof (settings.maxIps) !== "number") throw new Error("Settings error");
     } catch (error) {
@@ -679,6 +646,7 @@ function getDefaultOverviewSettings() {
     settings.removeSteamInfo = true;
     settings.advancedBans = true;
     settings.closeAdminLog = true;
+    settings.swapBattleEyeGuid = false;
     settings.maxNames = -1;
     settings.maxIps = -1;
     return settings;
@@ -733,36 +701,6 @@ function getDefaultBmInfoSettings() {
     settings.kdBarrier = 2 * ONE_DAY;
     settings.kdColors = [3, -1, -1, false];
 
-    return settings;
-}
-function checkMultiOrgSettings() {
-    try {
-        const bmMultiOrgSettings = JSON.parse(localStorage.getItem("BME_MULTI_ORG_SETTINGS"));
-        if (typeof (bmMultiOrgSettings) !== "object") throw new Error("Settings error");
-        if (typeof (bmMultiOrgSettings.enabled) !== "boolean") throw new Error("Settings error");
-    } catch (error) {
-        const defaultSettings = getDefaultMultiOrgSettings();
-        localStorage.setItem("BME_MULTI_ORG_SETTINGS", JSON.stringify(defaultSettings));
-    }
-}
-function getDefaultMultiOrgSettings() {
-    const settings = {};
-    settings.enabled = false;
-    return settings;
-}
-function checkStreamerModeSettings() {
-    try {
-        const bmInfoSettings = JSON.parse(localStorage.getItem("BME_STREAMER_MODE_SETTINGS"));
-        if (typeof (bmInfoSettings) !== "object") throw new Error("Settings error");
-        if (!settings.swapBattleEyeGuid) throw new Error("Settings error");
-    } catch (error) {
-        const defaultSettings = getDefaultStreamerModeSettings();
-        localStorage.setItem("BME_STREAMER_MODE_SETTINGS", JSON.stringify(defaultSettings));
-    }
-}
-function getDefaultStreamerModeSettings() {
-    const settings = {};
-    settings.swapBattleEyeGuid = true;
     return settings;
 }
 function checkSidebarSettings() {

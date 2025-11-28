@@ -1,3 +1,4 @@
+const IDENTIFIER_TABLE_CLASS_NAME = "css-11gv980";
 export function getAuthToken() {
     const authElement = document.getElementById("oauthToken");
     if (!authElement) {
@@ -15,7 +16,7 @@ export function getAuthToken() {
 
 let _rconElement = null;
 export async function getRconElement() {
-    if (!_rconElement || Date.now() > (_rconElement.timestamp + 150)) {
+    if (!_rconElement || Date.now() > (_rconElement.timestamp + 50)) {
         _rconElement = {
             timestamp: Date.now(),
             element: findRconElement()
@@ -38,6 +39,33 @@ async function findRconElement() {
     }
     return element;
 }
+
+let _identifierTable = null;
+export async function getIdentifierTable() {
+    if (!_identifierTable || Date.now() > (_identifierTable.timestamp + 50)) {
+        _identifierTable = {
+            timestamp: Date.now(),
+            element: findIdentifierTable()
+        }
+    }
+
+    return _identifierTable.element;
+}
+async function findIdentifierTable() {
+    let element = document.getElementsByClassName(IDENTIFIER_TABLE_CLASS_NAME);
+    let count = 0;
+    while (!element[0]) {
+        count++;
+        if (count > 50) {
+            console.error("BM-EXTRA: Failed to locate the Identifier table element.");
+            return null;
+        }
+        await new Promise(r => { setTimeout(r, 25 + (count * 5)); })
+        element = document.getElementsByClassName(IDENTIFIER_TABLE_CLASS_NAME);
+    }
+    return element[0].lastChild.children;
+}
+
 
 const ONE_SECOND = 1000;
 const ONE_MINUTE = 60 * ONE_SECOND;
@@ -113,4 +141,13 @@ export async function getSteamFriendlistFromRustApi(steamId) {
         console.log(error);
         return "ERROR";
     }
+}
+export function getStreamerModeName(steamId) {
+    const names = JSON.parse(localStorage.getItem("BME_SM_NAMES"))?.names;
+    if (!names) return null;
+
+    let v = BigInt(steamId) % 2147483647n;
+    v = v % BigInt(names.length);
+
+    return names[Number(v)];
 }

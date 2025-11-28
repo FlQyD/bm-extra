@@ -1,5 +1,5 @@
 import { getTimeString } from "./getInfoPanel.js";
-import { getRconElement } from "./misc.js";
+import { getIdentifierTable, getRconElement, getStreamerModeName } from "./misc.js";
 
 
 export async function displaySettingsButton(bmId) {
@@ -270,6 +270,49 @@ export async function closeAdminLog(bmId) {
         div.firstChild.click();
     }
 
+}
+
+export async function swapBattleEyeGuid(bmId, bmProfile) {
+    bmProfile = await bmProfile;
+
+    const steamIdObject = getSteamIdObject(bmProfile.included);
+    const steamId = steamIdObject?.attributes?.identifier;
+    if (!steamId) return console.log("BM-EXTRA: Steam ID is missing")
+
+    const smName = getStreamerModeName(steamId);
+    if (!smName) return console.error("BM-EXTRA: Failed to get Streamer Mode name")
+
+    const identifierTable = await getIdentifierTable();    
+    if (!identifierTable) return console.error("BM-EXTRA: identifierTable is missing!")
+
+    for (const identifier of identifierTable) {        
+        if (!identifier.innerText.includes("BattlEye GUID")) continue;
+        
+        const type = identifier.children[1];
+        type.firstChild.innerText = "SM Name";
+        type.lastChild.remove(); //Remove org lister
+        type.lastChild.remove(); //Remove session button
+        type.lastChild.remove(); //Remove copy button
+        type.lastChild.remove(); //Remove empty p tag
+
+        const smNameElement = identifier.children[0]?.firstChild?.firstChild;        
+        return smNameElement.innerText = smName;
+    }    
+}
+
+export async function limitItem(limit, item) {
+    const identifierTable = await getIdentifierTable();
+    if (!identifierTable) return console.error("BM-EXTRA: identifierTable is missing!")
+
+    let count = 0;
+    for (const identifier of identifierTable) {
+        const type = identifier?.children[1]?.firstChild?.innerText;
+        if (type !== item) continue;
+
+        count++;
+        if (count <= limit) continue;
+        identifier.classList.add("bme-hidden");
+    }
 }
 
 export async function advancedBans(bmId, banDataP) {
