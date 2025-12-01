@@ -1,19 +1,21 @@
-#bme-server-panel{
+#bme-server-panel {
     padding-left: 30px;
 }
-#bme-server-panel p{
+
+#bme-server-panel p {
     line-height: 1;
     font-size: 20px;
     font-weight: 500;
     margin-bottom: 5px;
     margin-top: 5px;
 }
-#bme-server-panel > div {
+
+#bme-server-panel>div {
     display: flex;
     gap: 10px;
-    
+
     margin-bottom: 10px;
-}   
+}
 
 #bme-server-panel img {
     width: 30px;
@@ -22,99 +24,132 @@
     border-radius: 5px;
     cursor: pointer;
 }
+
 #bme-server-panel img:hover {
     background: #ffffff20;
 }
+
 #bme-server-panel img:active {
     background: #9c9c9c60;
 }
-.offline p{
+
+.offline p {
     color: #b4b4b4 !important;
 }
 
-.bme-section-header{
+.bme-section-header {
     display: flex;
     align-items: center;
 
     gap: 15px;
     cursor: pointer;
 }
-.bme-section-header img{
+
+.bme-section-header img {
     width: 30px;
     height: 30px;
 }
-.bme-section-body{
+
+.bme-section-body {
     display: flex;
     gap: 30px;
-    
+
     height: 240px;
     transition: 250ms;
     overflow-x: hidden;
 }
-#bme-info-panel-arrow{
+
+#bme-info-panel-arrow {
     transition: 250ms;
     transform: rotate(90deg);
 }
-.closed{
+
+.closed {
     transform: rotate(0deg) !important;
 }
+
 .bme-section-body::-webkit-scrollbar {
     display: none;
 }
-.bme-section-body dl{
+
+.bme-section-body dl {
     margin-bottom: 0px !important;
 }
-.bme-section-body dt{
+
+.bme-section-body dt {
     width: 120px !important;
 }
-.bme-section-body dd{
+
+.bme-section-body dd {
     padding-left: 10px;
     margin-left: 120px !important;
     padding-right: 10px;
 }
-.bme-red-text{
+
+.bme-red-text {
     color: #ff5555;
 }
-.bme-yellow-text{
+
+.bme-yellow-text {
     color: #ffff00;
 }
-.bme-green-text{
+
+.bme-green-text {
     color: #55FF55;
 }
-.bme-info-title{
+
+.bme-info-title {
     margin: 0;
     font-weight: 700;
 }
-#bme-avatar{
+
+#bme-avatar {
     margin-right: 10px;
 }
-.bme-highlight{
+
+.bme-highlight {
     background: #ffffff10;
 }
 
 
 
-.bme-hidden{
+.bme-hidden {
     display: none;
 }
+
 .bme-flex {
     display: flex;
     align-items: center;
 }
-.bme-grow{
+
+.bme-grow {
     flex-grow: 1;
 }
-.bme-bold{
+
+.bme-bold {
     font-weight: 600;
 }
 
-.bme-sidebar-ban-details{
+.bme-sidebar-ban-details {
     display: flex;
 
     gap: 25px;
     padding-right: 25px;
 }
 
+#bme-server-panel a {
+    color: inherit;
+    transition: 75ms;
+}
+
+#bme-server-panel a:hover {
+    color: #1185ec;
+}
+
+.bme-vpn-background {
+    background: rgb(21, 15, 15) !important;
+    opacity: 0.60;
+}
 
 
 

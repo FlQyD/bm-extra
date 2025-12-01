@@ -1,4 +1,5 @@
 const ONE_DAY = 24 * 60 * 60 * 1000;
+
 export async function displaySettings() {
     if (document.getElementById("bme-settings-background")) return;
 
@@ -24,7 +25,7 @@ function getSettingsPage() {
     body.id = "bme-settings-body";
     page.appendChild(body);
 
-    const content = getSettingsBody(0);
+    const content = getSettingsBody(1);
     body.appendChild(content);
 
     return bg;
@@ -71,16 +72,6 @@ function getSettingsBody(index) {
     if (index === 3) return getApiKeysSettings();
 }
 
-function getIdentifierSettings() {
-    const element = document.createElement("div");
-    const title = document.createElement("h1");
-    title.innerText = "Identifier Settings";
-    element.appendChild(title);
-
-
-    return element;
-}
-
 
 
 function getOverviewSettings() {
@@ -98,12 +89,12 @@ function getOverviewSettings() {
         null, settingsBucket, "showAvatar", settings.showAvatar
     )
     const showBmInfoPanel = getToggleSettingsElement(
-        "Show BM Information",
+        "Show BM information",
         "Shows detailed information that is stored by battlemetrics and usually not visible by default",
         null, settingsBucket, "showInfoPanel", settings.showInfoPanel
     );
     const removeSteamInfo = getToggleSettingsElement(
-        "Remove Steam Information",
+        "Remove steam information",
         "Remove the default Steam information panel from the battlemetrics RCON profile when it appears",
         null, settingsBucket, "removeSteamInfo", settings.removeSteamInfo,
     );
@@ -113,12 +104,12 @@ function getOverviewSettings() {
         null, settingsBucket, "showServer", settings.showServer
     )
     const advancedBans = getToggleSettingsElement(
-        "Advanced Bans",
+        "Advanced bans",
         "Update ban reasons for a more readable format",
         null, settingsBucket, "advancedBans", settings.advancedBans
     )
     const closeAdminLog = getToggleSettingsElement(
-        "Close Admin Log",
+        "Close admin log",
         "Close admin log by default when opening a battlemetrics profile.",
         null, settingsBucket, "closeAdminLog", settings.closeAdminLog
     )
@@ -148,6 +139,58 @@ function getOverviewSettings() {
         resetButton
     );
 
+    return element;
+}
+
+
+
+function getIdentifierSettings() {
+    const element = document.createElement("div");
+    const title = document.createElement("h1");
+    title.innerText = "Identifier Settings";
+    element.appendChild(title);
+
+    const settingsBucket = "BME_IDENTIFIER_SETTINGS";
+    const settings = JSON.parse(localStorage.getItem(settingsBucket));
+
+    const showAvatarToggle = getToggleSettingsElement(
+        "Show avatar on page",
+        "Shows the players avatar when it's available next to his name",
+        null, settingsBucket, "showAvatar", settings.showAvatar
+    )
+    const showIspAsnData = getToggleSettingsElement(
+        "Show extra IP info",
+        "Shows the name of the ISP and the it's ASN number on the IP addresses.",
+        null, settingsBucket, "showIspAndAsnData", settings.showIspAndAsnData
+    )
+    const highlightVpn = getToggleSettingsElement(
+        "Highlight VPNs",
+        "Highlights VPNs to make it easier to differentiate.",
+        null, settingsBucket, "highlightVpn", settings.highlightVpn
+    )
+    const vpnSegment = document.createElement("div")
+    vpnSegment.classList.add("bme-settings-segment");
+
+    const removeVpnLabel = getToggleSettingsElement(
+        "Remove VPN label",
+        "Removes the VPN Labels from the identifiers.",
+        ["Highlight VPNs ON"], settingsBucket, "removeVpnLabel", settings.removeVpnLabel
+    )
+    const vpnAbove = getNumberSettingsElement(
+        "VPN connection requirement:",
+        "The number of connections needed to count the IP as a VPN by default.",
+        ["Highlight VPNs ON"], settingsBucket, "vpnAbove", settings.vpnAbove
+    )
+
+    vpnSegment.append(removeVpnLabel, vpnAbove)
+
+
+
+    const resetButton = getResetButton("bm-identifier")
+    element.append(
+        showAvatarToggle, showIspAsnData, highlightVpn, vpnSegment,
+        resetButton
+    )
     return element;
 }
 
@@ -483,6 +526,38 @@ function invokeChange(type) {
 
 
 
+function getToggleSettingsElement(title, description, requirements, settingsBucket, settingsName, currentValue) {
+    const element = document.createElement("div");
+    element.className = "bme-settings-row";
+
+    const firstRow = document.createElement("div");
+
+    const input = document.createElement("input");
+    input.classList.add("bme-toggle-input")
+    input.type = "checkbox";
+    input.checked = currentValue;
+
+    input.addEventListener("change", e => { setSettingTo(settingsBucket, settingsName, e.target.checked) })
+
+    const titleElement = document.createElement("h3");
+    titleElement.className = "bme-settings-title";
+    titleElement.textContent = title;
+    firstRow.append(input, titleElement)
+
+    const desc = document.createElement("p");
+    desc.className = "bme-settings-description";
+    desc.textContent = description;
+
+    element.append(firstRow, desc)
+
+    if (requirements) {
+        const reqs = document.createElement("p");
+        reqs.classList.add("bme-settings-requirements");
+        reqs.innerText = `REQUIRED: ${requirements.join(" | ")}`;
+        element.append(reqs);
+    }
+    return element;
+}
 function getNumberSettingsElement(title, description, requirements, settingsBucket, settingsName, currentValue) {
     const element = document.createElement("div");
     element.className = "bme-settings-row";
@@ -519,43 +594,15 @@ function getNumberSettingsElement(title, description, requirements, settingsBuck
     desc.textContent = description;
 
     element.append(firstRow, desc)
-    return element;
-}
-function getToggleSettingsElement(title, description, requirements, settingsBucket, settingsName, currentValue) {
-    const element = document.createElement("div");
-    element.className = "bme-settings-row";
-
-    const firstRow = document.createElement("div");
-
-    const input = document.createElement("input");
-    input.classList.add("bme-toggle-input")
-    input.type = "checkbox";
-    input.checked = currentValue;
-
-    input.addEventListener("change", e => { setSettingTo(settingsBucket, settingsName, e.target.checked) })
-
-    const titleElement = document.createElement("h3");
-    titleElement.className = "bme-settings-title";
-    titleElement.textContent = title;
-    firstRow.append(input, titleElement)
-
-    const desc = document.createElement("p");
-    desc.className = "bme-settings-description";
-    desc.textContent = description;
-
-    element.append(firstRow, desc)
-
     if (requirements) {
-        const reqs = document.createElement("p");
-        reqs.classList.add("bme-settings-requirements");
-        reqs.innerText = `REQUIRED: ${requirements.join(" | ")}`;
-        element.append(reqs);
+        const requirementsElement = document.createElement("p");
+        requirementsElement.classList.add("bme-settings-requirements");
+        requirementsElement.innerText = `REQUIRED: ${requirements.join(" | ")}`;
+        element.append(requirementsElement);
     }
     return element;
 }
-function setSettingTo(settingsBucket, settingsName, settingsValue) {
-    console.log(settingsBucket, settingsName, settingsValue);
-    
+function setSettingTo(settingsBucket, settingsName, settingsValue) {    
     const settings = JSON.parse(localStorage.getItem(settingsBucket));
     settings[settingsName] = settingsValue;
     localStorage.setItem(settingsBucket, JSON.stringify(settings));
@@ -586,6 +633,7 @@ function getResetButton(type) {
         if (type === "bm-main") localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(getDefaultMainSettings()));
         if (type === "bm-info") localStorage.setItem("BME_BM_INFO_SETTINGS", JSON.stringify(getDefaultBmInfoSettings()));
         if (type === "bm-overview") localStorage.setItem("BME_OVERVIEW_SETTINGS", JSON.stringify(getDefaultOverviewSettings()));
+        if (type === "bm-identifier") localStorage.setItem("BME_IDENTIFIER_SETTINGS", JSON.stringify(getDefaultIdentifierSettings()));
 
 
 
@@ -599,27 +647,12 @@ function getResetButton(type) {
 
 
 export function checkAndSetupSettingsIfMissing() {
-    checkMainSettings();
     checkOverviewSettings();
+    checkIdentifierSettings();
     checkBmInfoSettings();
     checkSidebarSettings();
 }
 
-function checkMainSettings() {
-    try {
-        const mainSettings = JSON.parse(localStorage.getItem("BME_MAIN_SETTINGS"));
-        if (typeof (mainSettings) !== "object") throw new Error("Settings error");
-        if (typeof (mainSettings.showAvatarIdentifier) !== "boolean") throw new Error("Settings error");
-    } catch (error) {
-        const defaultSettings = getDefaultMainSettings();
-        localStorage.setItem("BME_MAIN_SETTINGS", JSON.stringify(defaultSettings));
-    }
-}
-function getDefaultMainSettings() {
-    const settings = {};
-    settings.showAvatarIdentifier = false;
-    return settings;
-}
 function checkOverviewSettings() {
     try {
         const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"));
@@ -649,6 +682,30 @@ function getDefaultOverviewSettings() {
     settings.swapBattleEyeGuid = false;
     settings.maxNames = -1;
     settings.maxIps = -1;
+    return settings;
+}
+function checkIdentifierSettings() {
+    try {
+        const settings = JSON.parse(localStorage.getItem("BME_IDENTIFIER_SETTINGS"));
+        if (typeof (settings) !== "object") throw new Error("Settings error");
+        if (typeof (settings.showAvatar) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.showIspAndAsnData) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.highlightVpn) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.removeVpnLabel) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.vpnAbove) !== "number") throw new Error("Settings error");
+
+    } catch (error) {
+        const defaultSettings = getDefaultIdentifierSettings();
+        localStorage.setItem("BME_IDENTIFIER_SETTINGS", JSON.stringify(defaultSettings));
+    }
+}
+function getDefaultIdentifierSettings() {
+    const settings = {};
+    settings.showAvatar = false;
+    settings.showIspAndAsnData = true;
+    settings.highlightVpn = false;
+    settings.removeVpnLabel = true;
+    settings.vpnAbove = -1;
     return settings;
 }
 function checkBmInfoSettings() {

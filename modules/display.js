@@ -1,5 +1,5 @@
 import { getTimeString } from "./getInfoPanel.js";
-import { getIdentifierTable, getRconElement, getStreamerModeName } from "./misc.js";
+import { checkIfAlright, getIdentifierTable, getMain, getRconElement, getStreamerModeName } from "./misc.js";
 
 
 export async function displaySettingsButton(bmId) {
@@ -27,6 +27,7 @@ export async function displayServerActivity(bmId, bmProfile) {
         .filter(item => item.type === "server")
         .map(server => {
             return {
+                id: server.id,
                 name: server.attributes.name,
                 online: server.meta.online,
                 ip: `${server.attributes.ip}:${server.attributes.port}`,
@@ -58,7 +59,8 @@ function getCurrentServersElement(servers) {
             element.classList.add("offline");
 
         const firstLine = document.createElement("p");
-        firstLine.innerText = `${server.online ? "Current server" : "Last server"}: ${server.name} (${server.pop.current}/${server.pop.max})`;
+        const prefix = server.online ? "Current server" : "Last server";
+        firstLine.innerHTML = `${prefix}: <a href="https://www.battlemetrics.com/rcon/servers/${server.id}" target="_blank">${server.name}</a> (${server.pop.current}/${server.pop.max})`
         element.appendChild(firstLine);
 
         const secondLine = document.createElement("p");
@@ -207,10 +209,8 @@ function isAimTrainingServer(server) {
     return false;
 }
 
-
 export async function displayAvatar(bmId, bmProfile, bmSteamData) {
     bmProfile = await bmProfile;
-    bmSteamData = await bmSteamData;
 
     let avatarUrl = "";
 
@@ -218,16 +218,16 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData) {
     const profile = steamIdObject?.attributes?.metadata?.profile;
     if (profile) avatarUrl = profile.avatarmedium;
 
-    if (!avatarUrl && bmSteamData) {
-        const avatar = bmSteamData.attributes.avatar;
+    if (!avatarUrl) {
+        bmSteamData = await bmSteamData;
+        const avatar = bmSteamData?.attributes?.avatar;
         if (!avatar) return;
-
-        avatarUrl === `https://avatars.fastly.steamstatic.com/${avatar}`.replace(".jpg", "_medium.jpg");
+        avatarUrl = `https://avatars.fastly.steamstatic.com/${avatar}`.replace(".jpg", "_medium.jpg");
     }
     if (!avatarUrl) return;
 
-    const rconElement = await getRconElement();
-    const title = rconElement.firstChild;
+    const mainElement = await getMain();
+    const title = mainElement?.firstChild?.firstChild;
     if (!title) return;
 
     const avatarElement = document.createElement("img");
@@ -282,12 +282,12 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
     const smName = getStreamerModeName(steamId);
     if (!smName) return console.error("BM-EXTRA: Failed to get Streamer Mode name")
 
-    const identifierTable = await getIdentifierTable();    
+    const identifierTable = await getIdentifierTable();
     if (!identifierTable) return console.error("BM-EXTRA: identifierTable is missing!")
 
-    for (const identifier of identifierTable) {        
+    for (const identifier of identifierTable) {
         if (!identifier.innerText.includes("BattlEye GUID")) continue;
-        
+
         const type = identifier.children[1];
         type.firstChild.innerText = "SM Name";
         type.lastChild.remove(); //Remove org lister
@@ -295,9 +295,9 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
         type.lastChild.remove(); //Remove copy button
         type.lastChild.remove(); //Remove empty p tag
 
-        const smNameElement = identifier.children[0]?.firstChild?.firstChild;        
+        const smNameElement = identifier.children[0]?.firstChild?.firstChild;
         return smNameElement.innerText = smName;
-    }    
+    }
 }
 
 export async function limitItem(limit, item) {
@@ -371,6 +371,91 @@ function getBanItem(banData, banId) {
     return null;
 }
 
+export async function showExtraDataOnIps(bmId, bmProfile) {
+    bmProfile = await bmProfile;
+    const ips = bmProfile.included
+        .filter(item => item.attributes.type === "ip")
+        .map(item => {
+            const conInfo = item.attributes?.metadata?.connectionInfo;
+            const isp = Boolean(conInfo.isp) ? conInfo.isp : null;
+            const asn = Boolean(conInfo.asn) ? conInfo.asn : null;
+            return {
+                id: item.id ?? null,
+                ip: item.attributes?.identifier ?? null,
+                isp, asn
+            }
+        });
+    //15 is the minimum length, in case there would be no IP
+    const longestIp = Math.max(...ips.filter(ip => ip.ip).map(ip => ip.ip.length), 15);
+    const longestIsp = Math.max(...ips.filter(ip => ip.isp).map(ip => ip.isp.length));
+    const longestAsn = Math.max(...ips.filter(ip => ip.asn).map(ip => ip.asn.length));
+
+    const identifierTable = await getIdentifierTable();
+
+    for (const identifier of identifierTable) {
+        const { type, id } = getIdentifierType(identifier);
+        if (type !== "IP") continue;
+        if (!id) continue;
+
+        const ipObject = ips.find(ip => ip.id == id);
+        if (!ipObject) continue;
+        if (ipObject.isp === null) continue;
+
+        const ipElement = identifier?.firstChild?.firstChild?.lastChild;
+        const ipValue = `${ipElement.innerText}`.padEnd(longestIp);
+        const ispValue = `${ipObject.isp}`.padEnd(longestIsp);
+        const asnValue = `${ipObject.asn}`.padEnd(longestAsn);
+
+        const text = `${ipValue}    |    ISP: ${ispValue}    |    ASN: ${asnValue}`;
+        ipElement.innerText = text;
+
+    }
+
+
+}
+
+export async function highlightVpnIdentifiers(bmId, removeLabel, minConnection) {
+    const identifierTable = await getIdentifierTable();
+
+    for (const identifier of identifierTable) {
+        const { type, id } = getIdentifierType(identifier);
+        if (type !== "IP") continue;
+        if (!identifier.firstChild?.innerText?.includes("This IP appears to belong to")) continue;
+        makeItVpn(identifier, removeLabel);
+    }
+    if (minConnection > -1) checkConnections(identifierTable, removeLabel, minConnection);
+}
+async function checkConnections(identifierTable, removeLabel, minConnection) {
+    for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
+        if (!document.body.contains(identifierTable[0])) return;
+        if (identifierTable[0].parentNode.innerText.includes("Identifier shared with")) break;
+        await new Promise(r => { setTimeout(r, 150 * (i / 10)) })
+    }
+
+    for (const identifier of identifierTable) {
+        const { type, id } = getIdentifierType(identifier);
+        if (type !== "IP") continue;
+        if (identifier.classList.contains("bme-vpn-background")) continue;
+
+        const sharedText = identifier?.firstChild?.lastChild?.innerText?.trim();
+        if (!sharedText.includes("Identifier shared with")) continue;
+
+        let connectionCount = sharedText === "Identifier shared with more than 250 players." ?
+            250 : Number(sharedText.split("with ")[1].split(" player")[0]);
+
+        if (connectionCount > minConnection) makeItVpn(identifier, removeLabel);
+    }
+
+}
+function makeItVpn(identifier, removeLabel) {
+    identifier.classList.add("bme-vpn-background");
+    if (removeLabel) {
+        const nodes = identifier.firstChild.childNodes;
+        nodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.remove(); });
+    }
+}
+
+
 function getSteamIdObject(array) {
     const steamId = array.find(item => {
         if (item.type !== "identifier") return false;
@@ -379,12 +464,14 @@ function getSteamIdObject(array) {
     })
     return steamId;
 }
-function checkIfAlright(bmId, elementId) {
-    const urlId = location.href.split("/")[5];
-    if (urlId !== bmId) return true; //Page changed
-    if (elementId) {
-        const elementCheck = document.getElementById(elementId);
-        if (elementCheck) return true; //Already exist
-    }
-    return false; //Good to go!
+function getIdentifierType(identifier) {
+    const innerText = identifier?.children[1]?.innerText;
+    const type = Boolean(innerText) ? innerText.trim() : null;
+    if (type === null) return { type, id: null };
+
+    const typeElements = identifier?.childNodes[1].children;
+    const offset = type === "Name" ? 1 : 2;
+    const searchLink = typeElements[typeElements.length - offset]?.href;
+    const id = searchLink ? searchLink.split("=")[1] : null;
+    return { type, id }
 }

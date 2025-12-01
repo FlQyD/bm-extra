@@ -56,7 +56,7 @@ async function onOverviewPage(bmId) {
     const {
         displaySettingsButton, displayServerActivity, displayInfoPanel,
         displayAvatar, removeSteamInformation, closeAdminLog, advancedBans,
-        limitItem, swapBattleEyeGuid
+        limitItem, swapBattleEyeGuid, highlightVpnIdentifiers
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
     const playerCache = cache[bmId];
@@ -74,12 +74,21 @@ async function onOverviewPage(bmId) {
     if (settings.maxIps > 0) limitItem(settings.maxNames, "IP");
 }
 async function onIdentifierPage(bmId) {
-    const playerCache = cache[bmId];
-    sidebar(bmId, playerCache)
+    const settings = JSON.parse(localStorage.getItem("BME_IDENTIFIER_SETTINGS"))
+    if (!settings) return console.error(`BM-EXTRA: Main settings are missing!`);
 
     const {
-        swapBattleEyeGuid
+        swapBattleEyeGuid, displayAvatar, showExtraDataOnIps, highlightVpnIdentifiers
     } = await import(chrome.runtime.getURL('./modules/display.js'));
+
+
+    const playerCache = cache[bmId];
+    sidebar(bmId, playerCache)
+    
+    if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
+    if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile)
+    if (settings.highlightVpn) highlightVpnIdentifiers(bmId, settings.removeVpnLabel, settings.vpnAbove)
+
 
     swapBattleEyeGuid(bmId, playerCache.bmProfile);
 }
@@ -94,10 +103,10 @@ async function sidebar(bmId, playerCache) {
     } = await import(chrome.runtime.getURL('./modules/sidebar.js'));
 
     await insertSidebars();
-    if (settings.friends.enabled) insertFriendsSidebarElement(bmId, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (settings.historicFriends.enabled) insertHistoricFriendsSidebarElement(bmId, playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (settings.currentTeam.enabled) insertTeaminfoSidebarElement(bmId, playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData);
-    if (settings.publicBans.enabled) insertPublicBansSidebarElement(bmId, playerCache.publicBans);
+    if (settings.friends.enabled) insertFriendsSidebarElement(playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (settings.historicFriends.enabled) insertHistoricFriendsSidebarElement(playerCache.historicFriends, playerCache.steamFriends, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (settings.currentTeam.enabled) insertTeaminfoSidebarElement(playerCache.team, cache.connectedPlayersData, cache.connectedPlayersBanData);
+    if (settings.publicBans.enabled) insertPublicBansSidebarElement(playerCache.publicBans);
 }
 
 
@@ -358,49 +367,6 @@ async function getCurrentTeam(bmProfile) {
         }
     }
 }
-async function getLastServer(bmProfile, authToken) {
-    const myServers = await getMyServers(authToken);
-    if (!myServers) return null;
-
-    const servers = bmProfile.included
-        .filter(item => item.type === "server")
-        .map(server => {
-            return {
-                name: server.attributes?.name,
-                id: server.id,
-                orgId: server?.relationships?.organization?.data?.id,
-                lastPlayed: new Date(server.meta.lastSeen).getTime()
-            }
-        })
-        .filter(item => myServers.includes(item.id))
-        .sort((a, b) => b.lastPlayed - a.lastPlayed);
-
-    const lastServer = servers[0];
-
-    if (!lastServer) return null;
-    if (Date.now() - 2 * 24 * 60 * 60 * 1000 > lastServer.lastPlayed) return null;
-
-    return lastServer
-}
-async function getMyServers(authToken) {
-    let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
-    if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) return myServers.servers;
-
-    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${authToken}`)
-    if (resp?.status !== 200) {
-        console.error(`Failed to request your servers | Status: ${resp?.status}`);
-        return null;
-    }
-
-    const data = await resp.json();
-    myServers = {
-        timestamp: Date.now(),
-        servers: data.data.map(server => server.id)
-    }
-
-    localStorage.setItem("BME_MY_SERVER_CACHE", JSON.stringify(myServers))
-    return myServers.servers;
-}
 async function getBzTeamInfo(steamId, serverId, authToken) {
     const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
         method: "POST",
@@ -523,4 +489,46 @@ function getAuthToken() {
 
     return authToken;
 }
+async function getMyServers(authToken) {
+    let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
+    if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) return myServers.servers;
 
+    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${authToken}`)
+    if (resp?.status !== 200) {
+        console.error(`Failed to request your servers | Status: ${resp?.status}`);
+        return null;
+    }
+
+    const data = await resp.json();
+    myServers = {
+        timestamp: Date.now(),
+        servers: data.data.map(server => server.id)
+    }
+
+    localStorage.setItem("BME_MY_SERVER_CACHE", JSON.stringify(myServers))
+    return myServers.servers;
+}
+async function getLastServer(bmProfile, authToken) {
+    const myServers = await getMyServers(authToken);
+    if (!myServers) return null;
+
+    const servers = bmProfile.included
+        .filter(item => item.type === "server")
+        .map(server => {
+            return {
+                name: server.attributes?.name,
+                id: server.id,
+                orgId: server?.relationships?.organization?.data?.id,
+                lastPlayed: new Date(server.meta.lastSeen).getTime()
+            }
+        })
+        .filter(item => myServers.includes(item.id))
+        .sort((a, b) => b.lastPlayed - a.lastPlayed);
+
+    const lastServer = servers[0];
+
+    if (!lastServer) return null;
+    if (Date.now() - 2 * 24 * 60 * 60 * 1000 > lastServer.lastPlayed) return null;
+
+    return lastServer
+}

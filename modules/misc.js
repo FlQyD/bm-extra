@@ -1,4 +1,6 @@
 const IDENTIFIER_TABLE_CLASS_NAME = "css-11gv980";
+const MAIN_ELEMENT_CLASS_NAME = "main";
+const RCON_PLAYER_PAGE_ID = "RCONPlayerPage";
 export function getAuthToken() {
     const authElement = document.getElementById("oauthToken");
     if (!authElement) {
@@ -22,7 +24,7 @@ export async function getRconElement() {
             element: findRconElement()
         }
     }
-    
+
     return _rconElement.element;
 }
 async function findRconElement() {
@@ -38,6 +40,63 @@ async function findRconElement() {
         element = document.getElementById("RCONPlayerPage");
     }
     return element;
+}
+
+let running = false;
+let _main = null;
+export async function getMain() {
+    if ((!_main || Date.now() > (_main.timestamp + 100)) && !running) {
+        _main = {
+            timestamp: Date.now(),
+            element: findMain()
+        }
+    }
+
+    return _main.element;
+}
+async function findMain() {
+    running = true;
+    try {
+        const url = window.location.href;
+        if (url.includes("players") && url.split("/").length == 6) 
+            return await getMainFromRconElement();
+        
+        return await getMainElement()
+    } catch (error) {
+        console.error(error);
+    } finally {
+        running = false
+    }
+}
+async function getMainFromRconElement() {
+    let element = document.getElementById(RCON_PLAYER_PAGE_ID);
+    let count = 0;
+    while (!element) {
+        count++;
+        if (count > 100) {
+            console.error("BM-EXTRA: Failed to locate the main element.");
+            return null;
+        }
+        await new Promise(r => { setTimeout(r, 25 + (count * 5)); })
+        element = document.getElementById(RCON_PLAYER_PAGE_ID);
+    }
+    return element.parentElement;
+
+}
+async function getMainElement() {
+    let element = document.getElementsByClassName(MAIN_ELEMENT_CLASS_NAME)[0];
+    let count = 0;
+    while (!element) {
+        count++;
+        if (count > 100) {
+            console.error("BM-EXTRA: Failed to locate the main element.");
+            return null;
+        }
+        await new Promise(r => { setTimeout(r, 25 + (count * 5)); })
+        element = document.getElementsByClassName(MAIN_ELEMENT_CLASS_NAME)[0];
+    }
+    return element;
+
 }
 
 let _identifierTable = null;
@@ -78,10 +137,10 @@ export function getTimeString(timestamp, left = false) {
 
     if (left) {
         since = timestamp;
-    }else{
+    } else {
         const now = Date.now();
         since = now - timestamp;
-    } 
+    }
 
     if (since > ONE_YEAR) return `${(since / ONE_YEAR).toFixed(1)} years`;
     if (since > ONE_MONTH) return `${(since / ONE_MONTH).toFixed(1)} months`;
@@ -150,4 +209,13 @@ export function getStreamerModeName(steamId) {
     v = v % BigInt(names.length);
 
     return names[Number(v)];
+}
+export function checkIfAlright(bmId, elementId) {
+    const urlId = location.href.split("/")[5];
+    if (urlId !== bmId) return true; //Page changed
+    if (elementId) {
+        const elementCheck = document.getElementById(elementId);
+        if (elementCheck) return true; //Already exist
+    }
+    return false; //Good to go!
 }
