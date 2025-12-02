@@ -300,7 +300,7 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
     }
 }
 
-export async function limitItem(limit, item) {
+export async function limitItem(bmId, limit, item) {
     const identifierTable = await getIdentifierTable();
     if (!identifierTable) return console.error("BM-EXTRA: identifierTable is missing!")
 
@@ -311,6 +311,7 @@ export async function limitItem(limit, item) {
 
         count++;
         if (count <= limit) continue;
+        if (checkIfAlright(bmId, null, "overview")) return;
         identifier.classList.add("bme-hidden");
     }
 }
@@ -414,18 +415,18 @@ export async function showExtraDataOnIps(bmId, bmProfile) {
 
 }
 
-export async function highlightVpnIdentifiers(bmId, removeLabel, minConnection) {
+export async function highlightVpnIdentifiers(bmId, vpnSettings) {
     const identifierTable = await getIdentifierTable();
 
     for (const identifier of identifierTable) {
         const { type, id } = getIdentifierType(identifier);
         if (type !== "IP") continue;
         if (!identifier.firstChild?.innerText?.includes("This IP appears to belong to")) continue;
-        makeItVpn(identifier, removeLabel);
+        makeItVpn(identifier, vpnSettings);
     }
-    if (minConnection > -1) checkConnections(identifierTable, removeLabel, minConnection);
+    if (vpnSettings.threshold > -1) checkConnections(identifierTable, vpnSettings);
 }
-async function checkConnections(identifierTable, removeLabel, minConnection) {
+async function checkConnections(identifierTable, vpnSettings) {
     for (let i = 0; i < 50; i++) { //Wait till shared identifiers load
         if (!document.body.contains(identifierTable[0])) return;
         if (identifierTable[0].parentNode.innerText.includes("Identifier shared with")) break;
@@ -435,7 +436,7 @@ async function checkConnections(identifierTable, removeLabel, minConnection) {
     for (const identifier of identifierTable) {
         const { type, id } = getIdentifierType(identifier);
         if (type !== "IP") continue;
-        if (identifier.classList.contains("bme-vpn-background")) continue;
+        if (identifier.classList.contains("bme-vpn-identifier")) continue;
 
         const sharedText = identifier?.firstChild?.lastChild?.innerText?.trim();
         if (!sharedText.includes("Identifier shared with")) continue;
@@ -443,17 +444,21 @@ async function checkConnections(identifierTable, removeLabel, minConnection) {
         let connectionCount = sharedText === "Identifier shared with more than 250 players." ?
             250 : Number(sharedText.split("with ")[1].split(" player")[0]);
 
-        if (connectionCount > minConnection) makeItVpn(identifier, removeLabel);
+        if (connectionCount > vpnSettings.threshold) makeItVpn(identifier, vpnSettings);
     }
 
 }
-function makeItVpn(identifier, removeLabel) {
-    identifier.classList.add("bme-vpn-background");
-    if (removeLabel) {
+
+function makeItVpn(identifier, vpnSettings) {
+    identifier.classList.add("bme-vpn-identifier");    
+    identifier.style.background = vpnSettings.background;
+    identifier.style.opacity = vpnSettings.opacity;
+    if (vpnSettings.label) {
         const nodes = identifier.firstChild.childNodes;
         nodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.remove(); });
     }
 }
+
 
 
 function getSteamIdObject(array) {

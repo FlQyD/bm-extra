@@ -174,15 +174,26 @@ function getIdentifierSettings() {
     const removeVpnLabel = getToggleSettingsElement(
         "Remove VPN label",
         "Removes the VPN Labels from the identifiers.",
-        ["Highlight VPNs ON"], settingsBucket, "removeVpnLabel", settings.removeVpnLabel
+        null, settingsBucket, "removeVpnLabel", settings.removeVpnLabel
     )
     const vpnAbove = getNumberSettingsElement(
         "VPN connection requirement:",
-        "The number of connections needed to count the IP as a VPN by default.",
-        ["Highlight VPNs ON"], settingsBucket, "vpnAbove", settings.vpnAbove
+        "The number of connections needed to count the identifier as a VPN by default.",
+        null, settingsBucket, "vpnAbove", settings.vpnAbove
+    )
+    const vpnBgColor = getColorSettingsElement(
+        "VPN Background color:",
+        "Choose the background color of the VPN identifier element.",
+        null, settingsBucket, "vpnBgColor", settings.vpnBgColor
+    )
+    const vpnOpacity = getNumberSettingsElement(
+        "VPN Opacity:",
+        "Choose the Level of Opacity that should be applied to the VPNs.",
+        null, settingsBucket, "vpnOpacity", settings.vpnOpacity
     )
 
-    vpnSegment.append(removeVpnLabel, vpnAbove)
+
+    vpnSegment.append(removeVpnLabel, vpnAbove, vpnBgColor)
 
 
 
@@ -602,6 +613,48 @@ function getNumberSettingsElement(title, description, requirements, settingsBuck
     }
     return element;
 }
+function getColorSettingsElement(title, description, requirements, settingsBucket, settingsName, currentValue) {
+    const element = document.createElement("div");
+    element.className = "bme-settings-row";
+
+    const firstRow = document.createElement("div");
+
+    const titleElement = document.createElement("h3");
+    titleElement.className = "bme-settings-title";
+    titleElement.textContent = title;
+
+    const input = document.createElement("input");
+    input.classList.add("bme-settings-number-input")
+    input.type = "color";
+    input.value = currentValue;
+    firstRow.append(titleElement, input)
+
+    input.addEventListener("change", e => {
+        const value = e.target.value;
+        try {
+            setSettingTo(settingsBucket, settingsName, value);
+            e.target.classList.add("bme-sm-green");
+            setTimeout(() => { e.target.classList.remove("bme-sm-green"); }, 400);
+        } catch (error) {
+            console.log(error);
+            e.target.classList.add("bme-sm-red");
+            setTimeout(() => { e.target.classList.remove("bme-sm-red"); }, 400);
+        }
+    });
+
+    const desc = document.createElement("p");
+    desc.className = "bme-settings-description";
+    desc.textContent = description;
+
+    element.append(firstRow, desc)
+    if (requirements) {
+        const requirementsElement = document.createElement("p");
+        requirementsElement.classList.add("bme-settings-requirements");
+        requirementsElement.innerText = `REQUIRED: ${requirements.join(" | ")}`;
+        element.append(requirementsElement);
+    }
+    return element;
+}
 function setSettingTo(settingsBucket, settingsName, settingsValue) {    
     const settings = JSON.parse(localStorage.getItem(settingsBucket));
     settings[settingsName] = settingsValue;
@@ -693,6 +746,8 @@ function checkIdentifierSettings() {
         if (typeof (settings.highlightVpn) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.removeVpnLabel) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.vpnAbove) !== "number") throw new Error("Settings error");
+        if (typeof (settings.vpnBgColor) !== "string") throw new Error("Settings error");
+        if (typeof (settings.vpnOpacity) !== "number") throw new Error("Settings error");
 
     } catch (error) {
         const defaultSettings = getDefaultIdentifierSettings();
@@ -706,6 +761,8 @@ function getDefaultIdentifierSettings() {
     settings.highlightVpn = false;
     settings.removeVpnLabel = true;
     settings.vpnAbove = -1;
+    settings.vpnBgColor = "#150f0f";
+    settings.vpnOpacity = 0.6;
     return settings;
 }
 function checkBmInfoSettings() {

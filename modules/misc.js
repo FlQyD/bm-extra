@@ -210,12 +210,17 @@ export function getStreamerModeName(steamId) {
 
     return names[Number(v)];
 }
-export function checkIfAlright(bmId, elementId) {
+export function checkIfAlright(bmId, elementId, pageId) {
     const urlId = location.href.split("/")[5];
     if (urlId !== bmId) return true; //Page changed
     if (elementId) {
         const elementCheck = document.getElementById(elementId);
         if (elementCheck) return true; //Already exist
     }
+    if (pageId === "overview") {
+        if (!window.location.href.includes("/players/")) return true;
+        if (window.location.href.split("/").length !== 6) return true;
+    }
+    
     return false; //Good to go!
 }
