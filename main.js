@@ -3,7 +3,6 @@ console.log("EXTENSION: bm-extra loaded!")
 const cache = {};
 cache.connectedPlayersData = [];
 cache.connectedPlayersBanData = [];
-
 const connectedPlayersData = new Proxy(cache.connectedPlayersData, {
     set(target, prop, value) {
         target[prop] = value;
@@ -78,7 +77,8 @@ async function onIdentifierPage(bmId) {
     if (!settings) return console.error(`BM-EXTRA: Main settings are missing!`);
 
     const {
-        swapBattleEyeGuid, displayAvatar, showExtraDataOnIps, highlightVpnIdentifiers
+        swapBattleEyeGuid, displayAvatar, showExtraDataOnIps, highlightVpnIdentifiers,
+        displayAvatars
     } = await import(chrome.runtime.getURL('./modules/display.js'));
 
 
@@ -88,7 +88,7 @@ async function onIdentifierPage(bmId) {
     if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
-
+    if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars)
 
     swapBattleEyeGuid(bmId, playerCache.bmProfile);
 }
@@ -121,6 +121,8 @@ function setupCacheFor(bmId) {
     cache[bmId].steamFriends = getSteamFriends(cache[bmId].bmProfile, "steam");
     cache[bmId].historicFriends = {}
     cache[bmId].historicFriends.rustApi = getSteamFriends(cache[bmId].bmProfile, "rust-api");
+    cache[bmId].identifiers = {}
+    cache[bmId].identifiers.avatars = getSteamAvatars(cache[bmId].bmProfile);
     cache[bmId].team = getCurrentTeam(cache[bmId].bmProfile);
     cache[bmId].publicBans = getPublicBans(cache[bmId].bmProfile);
     //cache.historicFriends.steamidCom
@@ -200,48 +202,6 @@ async function getSteamFriends(bmProfile, type) {
     if (type === "rust-api") return getSteamFriendlistFromRustApi(steamId);
     return undefined;
 }
-async function getSteamFriendlistFromSteam(steamId) {
-    try {
-        const STEAM_API_KEY = localStorage.getItem("BME_STEAM_API_KEY");
-        if (!STEAM_API_KEY) return "NO_API_KEY";
-
-        let value = null;
-        chrome.runtime.onMessage.addListener(function (response) {
-            if (response.type !== "BME_STEAM_FRIENDLIST_RESOLVED") return;
-            if (response.status === "ERROR") throw new Error(`Failed to request steam friends: \n  ${response.message}`);
-
-            value = response.value;
-        })
-
-        chrome.runtime.sendMessage({ type: "BME_STEAM_FRIENDLIST", subject: steamId, apiKey: STEAM_API_KEY });
-        while (!value) await new Promise(r => { setTimeout(r, 10); })
-        return value;
-    } catch (error) {
-        console.log(error);
-        return "ERROR";
-    }
-}
-async function getSteamFriendlistFromRustApi(steamId) {
-    try {
-        const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
-        if (!RUST_API_KEY) return "NO_API_KEY";
-
-        let value = null;
-        chrome.runtime.onMessage.addListener(function (response) {
-            if (response.type !== "BME_RUST_API_FRIENDLIST_RESOLVED") return;
-            if (response.status === "ERROR") throw new Error(`Failed to request rust api friends: \n  ${response.message}`);
-
-            value = response.value;
-        })
-
-        chrome.runtime.sendMessage({ type: "BME_RUST_API_FRIENDLIST", subject: steamId, apiKey: RUST_API_KEY });
-        while (!value) await new Promise(r => { setTimeout(r, 10); })
-        return value;
-    } catch (error) {
-        console.log(error);
-        return "ERROR";
-    }
-}
 
 async function loadPlayerData(friends, historicFriends, team) {
     friends = await friends;
@@ -249,13 +209,15 @@ async function loadPlayerData(friends, historicFriends, team) {
     team = await team;
 
     const uniqueSteamIds = [];
+    console.log(cache);
+    
 
     if (typeof (friends) !== "string")
         friends.forEach(friend => { if (!uniqueSteamIds.includes(friend.steamId)) uniqueSteamIds.push(friend.steamId) });
     if (typeof (historicFriends) !== "string")
         historicFriends.forEach(friend => { if (!uniqueSteamIds.includes(friend.steamId)) uniqueSteamIds.push(friend.steamId) });
 
-    team.members.forEach(member => { if (!uniqueSteamIds.includes(member)) uniqueSteamIds.push(member) });
+    team.members.forEach(member => { if (!uniqueSteamIds.includes(member.steamId)) uniqueSteamIds.push(member.steamId) });
 
     for (let i = 0; i < uniqueSteamIds.length; i += 100) {
         requestAndProcessPlayerData(uniqueSteamIds.slice(i, i + 100));
@@ -356,6 +318,62 @@ async function getCurrentServersPopulation(bmProfile, authToken) {
     })
 }
 
+async function getSteamAvatars(bmProfile) {
+    bmProfile = await bmProfile;
+
+    const steamIdObject = bmProfile.included.find(identifier => identifier?.attributes?.type === "steamID");
+    const steamId = steamIdObject?.attributes?.identifier;
+    const currentAvatarUrl = steamIdObject?.attributes?.metadata?.profile?.avatar;
+    const avatarHash = currentAvatarUrl?.split("/")[3]?.substring(0, 40);
+    console.log(steamIdObject?.attributes?.lastSeen);
+    
+    const lastSeen = Math.floor(new Date(steamIdObject?.attributes?.metadata?.profile?.lastChecked ?? steamIdObject?.attributes?.lastSeen).getTime() / 1000);
+    console.log(lastSeen);
+    
+    const avatarHits = "N/A";
+
+
+    if (!avatarHash) return [];
+    const avatars = await getAvatarsFromRustApi(steamId);
+    if (typeof (avatars[0]) === "string" && avatarHash) {
+        return [{ avatar: avatarHash, avatarHits, lastSeen }]
+    }
+
+    const index = avatars.findIndex(item => item.avatar === avatarHash);
+    if (index !== -1) {
+        avatars[index].lastSeen = lastSeen;
+    } else {
+        avatars.push({
+            avatar: avatarHash,
+            avatarHits, lastSeen
+        })
+    }
+    avatars.sort((a, b) => b.lastSeen - a.lastSeen);
+    return avatars;
+}
+async function getAvatarsFromRustApi(steamId) {
+    try {
+        const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
+        if (!RUST_API_KEY) return "NO_API_KEY";
+        if (RUST_API_KEY[60] !== "1") return "NO_PERMISSION";
+
+        let value = null;
+        chrome.runtime.onMessage.addListener(function (response) {
+            if (response.type !== "BME_RUST_API_AVATARS_RESOLVED") return;
+            if (response.status === "ERROR") throw new Error(`Failed to request rust api friends: \n  ${response.message}`);
+
+            value = response.value;
+        })
+
+        chrome.runtime.sendMessage({ type: "BME_RUST_API_AVATARS", subject: steamId, apiKey: RUST_API_KEY });
+        while (!value) await new Promise(r => { setTimeout(r, 10); })
+        return value;
+    } catch (error) {
+        console.log(error);
+        return "ERROR";
+    }
+}
+
 async function getCurrentTeam(bmProfile) {
     try {
         const authToken = await getAuthToken();
@@ -380,11 +398,19 @@ async function getCurrentTeam(bmProfile) {
         //Breakup rawTeaminfo
         const teamMembers = [];
         let teamId = -1;
+        let onlineIndex = -1;
+        let leaderIndex = -1;
         rawTeaminfo.split("\n").forEach(line => {
             if (line.startsWith("ID: ")) teamId = line.split(" ")[1];
+            if (line.startsWith("steamID")) {
+                onlineIndex = line.indexOf("online")
+                leaderIndex = line.indexOf("leader")
+            }
             if (!line.includes("76561")) return;
 
-            teamMembers.push(line.substring(0, 17));
+            const memberSteamId = line.substring(0, 17)
+
+            teamMembers.push({ steamId: memberSteamId, online: line[onlineIndex] === "x", leader: line[leaderIndex] === "x" });
         })
 
         const teamInfo = {};
@@ -568,7 +594,7 @@ async function getLastServer(bmProfile, authToken, onlyMyServer) {
         if (!lastServer) return null;
         return lastServer;
     }
-    
+
     const lastServer = servers[0];
     if (!lastServer) return null;
     return lastServer

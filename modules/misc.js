@@ -184,6 +184,7 @@ export async function getSteamFriendlistFromRustApi(steamId) {
     try {
         const RUST_API_KEY = localStorage.getItem("BME_RUST_API_KEY");
         if (!RUST_API_KEY) return "NO_API_KEY";
+        if (RUST_API_KEY[54] !== "1") return "MISSING_PERMISSION" 
 
         let value = null;
         chrome.runtime.onMessage.addListener(function (response) {

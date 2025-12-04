@@ -6,7 +6,7 @@ export async function displaySettingsButton(bmId) {
     const rconElement = await getRconElement();
 
     const title = rconElement?.firstChild;
-    if (!title) return console.error("BM-EXTRA: Failed to located title. Failed to display settings button.")
+    if (!title) return console.error("BM-EXTRA: Failed to locate title.")
     title.classList.add("bme-flex");
 
     const button = document.createElement("img");
@@ -16,8 +16,6 @@ export async function displaySettingsButton(bmId) {
     const { displaySettings } = await import(chrome.runtime.getURL('./modules/settings.js'));
 
     button.addEventListener("click", displaySettings)
-
-
 }
 
 export async function displayServerActivity(bmId, bmProfile) {
@@ -288,15 +286,21 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
     for (const identifier of identifierTable) {
         if (!identifier.innerText.includes("BattlEye GUID")) continue;
 
+        
         const type = identifier.children[1];
         type.firstChild.innerText = "SM Name";
         type.lastChild.remove(); //Remove org lister
         type.lastChild.remove(); //Remove session button
         type.lastChild.remove(); //Remove copy button
         type.lastChild.remove(); //Remove empty p tag
-
+        
+        identifier.title = smName;
+        identifier.children[0].firstChild.title = smName;
         const smNameElement = identifier.children[0]?.firstChild?.firstChild;
-        return smNameElement.innerText = smName;
+        smNameElement.innerText = smName;
+        smNameElement.title = smName
+        
+        return;
     }
 }
 
@@ -448,9 +452,8 @@ async function checkConnections(identifierTable, vpnSettings) {
     }
 
 }
-
 function makeItVpn(identifier, vpnSettings) {
-    identifier.classList.add("bme-vpn-identifier");    
+    identifier.classList.add("bme-vpn-identifier");
     identifier.style.background = vpnSettings.background;
     identifier.style.opacity = vpnSettings.opacity;
     if (vpnSettings.label) {
@@ -459,7 +462,63 @@ function makeItVpn(identifier, vpnSettings) {
     }
 }
 
+export async function displayAvatars(bmId, avatars) {
+    avatars = await avatars;
+    console.log(avatars);
+    
+    const identifierTable = await getIdentifierTable();
+    if (!identifierTable) return console.error("BM-EXTRA: Failed to find identifierTable!");
+    const nameElement = Array.from(identifierTable).find(item => item?.innerText?.trim() === "Name");
+    if (!nameElement) return console.error("BM-EXTRA: Failed to locate nameElement!");
 
+    if (avatars.length === 0) return;
+    const avatarTitle = getAvatarTitle();
+    nameElement.before(avatarTitle);
+
+    avatars.forEach(avatar => {
+        const avatarElement = getAvatarElement(avatar);
+        nameElement.before(avatarElement);
+    })
+
+}
+function getAvatarTitle() {
+    const element = document.createElement("tr");
+    element.classList.add("css-147tpna");
+
+    const inner = document.createElement("th")
+    inner.colSpan = 3;
+    inner.innerText = "Avatar";
+    element.append(inner);
+
+    return element;
+}
+function getAvatarElement(item) {
+    const tr = document.createElement("tr");
+    const lastSeen = item.lastSeen*1000;
+    const iso = new Date(lastSeen).toISOString();    
+
+    //Heavily modified Standard BattleMetrics Identifier
+    tr.innerHTML = `
+        <td data-title="Identifier">
+            <div title="${item.avatar}" class="css-8uhtka">
+                <a href="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" target="_blank">
+                    <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_medium.jpg" class="bme-avatar-identifier">
+                </a>
+                <span class="css-q39y9k" title="${item.avatar}">${item.avatar} | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players</span>
+            </div>
+        </td>
+        <td data-title="Type">
+            <div class="css-18s4qom">Avatar</div>
+        </td>
+        <td data-title="Last Seen">
+            <time>${`${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}`}</time><br />
+            <time class="css-18s4qom">${iso.substring(12, 17)}</time>
+            <time class="css-18s4qom">${getTimeString(lastSeen)} ago</time>
+        </td>
+    `;
+
+    return tr;
+}
 
 function getSteamIdObject(array) {
     const steamId = array.find(item => {

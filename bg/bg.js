@@ -17,6 +17,7 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
     const returnObject = { type: `${request.type}_RESOLVED` }
     if (request.type === "BME_STEAM_FRIENDLIST") return sendFriendlistFromSteam(request.subject, request.apiKey, sender, returnObject);
     if (request.type === "BME_RUST_API_FRIENDLIST") return sendFriendlistFromRustApi(request.subject, request.apiKey, sender, returnObject)
+    if (request.type === "BME_RUST_API_AVATARS") return sendAvatarsFromRustApi(request.subject, request.apiKey, sender, returnObject)
     if (request.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(request.subject, request.apiKey, sender, returnObject);
     if (request.type.startsWith("BME_BAN_SUMMARIES")) return sendSteamPlayerBanSummaries(request.subject, request.apiKey, sender, returnObject);
     if (request.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(request.subject, request.apiKey, sender, returnObject);
@@ -25,7 +26,7 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
 async function sendFriendlistFromSteam(steamId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=${apiKey}&steamid=${steamId}&relationship=friend`);
-        if (resp?.status !== 200 && resp.status !== 401) throw new Error(`Failed to request steam friends of ${steamId} with the key that starts: ${apiKey.substring(0, 10)} | Status: ${resp?.status}`)
+        if (resp?.status !== 200 && resp.status !== 401) throw new Error(`Requesting Steam Friends Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
@@ -50,7 +51,7 @@ async function sendFriendlistFromSteam(steamId, apiKey, sender, returnObject) {
 async function sendFriendlistFromRustApi(steamId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://rust-api.flqyd.dev/steamFriends/${steamId}?accessToken=${apiKey}`);
-        if (resp?.status !== 200) throw new Error(`Request Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+        if (resp?.status !== 200) throw new Error(`Requesting Rust Api Friends Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
@@ -64,11 +65,28 @@ async function sendFriendlistFromRustApi(steamId, apiKey, sender, returnObject) 
     }
 
 }
+async function sendAvatarsFromRustApi(steamId, apiKey, sender, returnObject) {
+    try {
+        const resp = await fetch(`https://rust-api.flqyd.dev/getAvatars/${steamId}?accessToken=${apiKey}`);
+        if (resp?.status !== 200) throw new Error(`Requesting Avatars Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+
+        const data = await resp.json();
+        returnObject.status = "OK";
+        returnObject.value = data.data.avatars;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+
+}
 async function sendSteamPlayerSummaries(steamIds, API_KEY, sender, returnObject) {
     try {
         const resp = await fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${API_KEY}&steamids=${steamIds}`);
         if (resp.status === 429) throw new Error("Rate Limit")
-        if (resp.status !== 200) throw new Error("Error while fetching, code: " + resp.status);
+        if (resp?.status !== 200) throw new Error(`Requesting Steam Player Summaries Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";
@@ -93,7 +111,8 @@ async function sendSteamPlayerSummaries(steamIds, API_KEY, sender, returnObject)
 async function sendSteamPlayerBanSummaries(steamIds, API_KEY, sender, returnObject) {
     try {
         const resp = await fetch(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${API_KEY}&steamids=${steamIds}`);
-        if (resp.status !== 200) throw new Error("Error while fetching, code: " + resp.status);
+        if (resp.status === 429) throw new Error("Rate Limit")
+        if (resp?.status !== 200) throw new Error(`Requesting Steam Ban Summaries Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status === "OK";
@@ -117,7 +136,7 @@ async function sendSteamPlayerBanSummaries(steamIds, API_KEY, sender, returnObje
 async function sendPublicBans(steamId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://rust-api.flqyd.dev/bans/${steamId}?accessToken=${apiKey}`);
-        if (resp?.status !== 200) throw new Error(`Request Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
+        if (resp?.status !== 200) throw new Error(`Requesting Public Bans Failed | steamId: ${steamId} | API KEY: ${apiKey.substring(0, 10)}... | Status: ${resp?.status}`)
 
         const data = await resp.json();
         returnObject.status = "OK";

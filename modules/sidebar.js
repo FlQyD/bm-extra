@@ -26,6 +26,7 @@ function getSidebarElement(side) {
 export async function insertFriendsSidebarElement(steamFriends, connectedPlayersData, connectedPlayersBanData, server) {
     steamFriends = await steamFriends;
     server = await server;
+    
     if (typeof (steamFriends) !== "string") {
         const onlineIds = server.map(item => item.steamId);
         steamFriends = steamFriends.map(item => {
@@ -157,11 +158,11 @@ export async function insertTeaminfoSidebarElement(team, connectedPlayersData, c
     team = await team;
 
     const teamMembers = team.members.map(member => {
-        const steamData = getPlayerSteamData(member, connectedPlayersData);
-        const banData = getPlayerSteamData(member, connectedPlayersBanData);
+        const steamData = getPlayerSteamData(member.steamId, connectedPlayersData);
+        const banData = getPlayerSteamData(member.steamId, connectedPlayersBanData);
 
-        return { steamId: member, steamData, banData }
-    })
+        return { ...member, steamData, banData }
+    })    
 
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
@@ -297,6 +298,12 @@ function getPlayerElement(player, settings) {
         const sinceElement = document.createElement("p");
         sinceElement.innerText = `Since: ${getPlayerTimeString(since)}`;
         details.appendChild(sinceElement)
+    }
+
+    if (player.leader) {
+        const leaderElement = document.createElement("p");
+        leaderElement.innerText = `Team Leader`;
+        details.appendChild(leaderElement)
     }
 
     const banData = getBanData(player.banData, setupValue);

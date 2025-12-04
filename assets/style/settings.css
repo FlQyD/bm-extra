@@ -104,6 +104,21 @@
     margin-bottom: 5px;
 }
 
+.bme-settings-row button{
+    background: #0c5da5;
+    padding: 3px 15px;
+    border: none;
+    outline: none;
+    font-weight: 600;
+
+    transition: 60ms;
+}
+.bme-settings-row button:hover{
+    background: #0c5ea5e6;
+}
+.bme-settings-row button:active{
+    background: #0c5ea5bf;
+}
 
 .bme-settings-row h3 {
     margin: 0 !important;
@@ -237,14 +252,21 @@
 .bme-title-row {
     gap: 30px;
 }
-
-.bme-settings-requirements {
-    color: #ff5555;
+.bme-settings-description{
     margin-left: 20px !important;
+}
+.bme-settings-req{
+    margin-left: 20px !important;
+}
+.bme-settings-text-green {
+    color: #55ff55;
+}
+.bme-settings-text-red {
+    color: #ff5555;
 }
 
 .bme-settings-segment {
-    margin-left: 40px !important;
+    margin-left: 60px !important;
     margin-bottom: 20px !important;
 }
 
@@ -273,6 +295,10 @@
     transition: 100ms;
 
     outline: none;
+}
+.bme-settings-title{
+    font-size: 26px;
+    line-height: 1;
 }
 
 .bme-key-settings-wrapper>input:focus {
@@ -352,8 +378,24 @@
     margin-left: 10px;
     transition: 400ms;
 }
+.bme-settings-color-input {
+    width: 80px;
+    height: 26px;
 
+    padding: 0;
+    border: none;
+    -webkit-appearance: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.bme-settings-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
 
+.bme-settings-color-input::-webkit-color-swatch {
+    border: 1px solid #fff;
+    border-radius: 6px;
+}
 
 
 
