@@ -12,10 +12,12 @@ export async function displaySettingsButton(bmId) {
     const button = document.createElement("img");
     button.id = "bme-settings-button"
     button.src = chrome.runtime.getURL('assets/img/settings.png');
-    title.appendChild(button);
+    
     const { displaySettings } = await import(chrome.runtime.getURL('./modules/settings.js'));
-
     button.addEventListener("click", displaySettings)
+    
+    const testElement = document.getElementById("bme-settings-button");
+    if (!testElement) title.appendChild(button);
 }
 
 export async function displayServerActivity(bmId, bmProfile) {
@@ -286,20 +288,20 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
     for (const identifier of identifierTable) {
         if (!identifier.innerText.includes("BattlEye GUID")) continue;
 
-        
+
         const type = identifier.children[1];
         type.firstChild.innerText = "SM Name";
         type.lastChild.remove(); //Remove org lister
         type.lastChild.remove(); //Remove session button
         type.lastChild.remove(); //Remove copy button
         type.lastChild.remove(); //Remove empty p tag
-        
+
         identifier.title = smName;
         identifier.children[0].firstChild.title = smName;
         const smNameElement = identifier.children[0]?.firstChild?.firstChild;
         smNameElement.innerText = smName;
         smNameElement.title = smName
-        
+
         return;
     }
 }
@@ -462,10 +464,9 @@ function makeItVpn(identifier, vpnSettings) {
     }
 }
 
-export async function displayAvatars(bmId, avatars) {
+export async function displayAvatars(bmId, avatars, zoomable) {
     avatars = await avatars;
-    console.log(avatars);
-    
+
     const identifierTable = await getIdentifierTable();
     if (!identifierTable) return console.error("BM-EXTRA: Failed to find identifierTable!");
     const nameElement = Array.from(identifierTable).find(item => item?.innerText?.trim() === "Name");
@@ -476,7 +477,7 @@ export async function displayAvatars(bmId, avatars) {
     nameElement.before(avatarTitle);
 
     avatars.forEach(avatar => {
-        const avatarElement = getAvatarElement(avatar);
+        const avatarElement = getAvatarElement(avatar, zoomable);
         nameElement.before(avatarElement);
     })
 
@@ -492,19 +493,21 @@ function getAvatarTitle() {
 
     return element;
 }
-function getAvatarElement(item) {
+function getAvatarElement(item, zoomable) {
     const tr = document.createElement("tr");
-    const lastSeen = item.lastSeen*1000;
-    const iso = new Date(lastSeen).toISOString();    
+    const lastSeen = item.lastSeen * 1000;
+    const iso = new Date(lastSeen).toISOString();
 
     //Heavily modified Standard BattleMetrics Identifier
     tr.innerHTML = `
         <td data-title="Identifier">
-            <div title="${item.avatar}" class="css-8uhtka">
-                <a href="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" target="_blank">
-                    <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_medium.jpg" class="bme-avatar-identifier">
-                </a>
-                <span class="css-q39y9k" title="${item.avatar}">${item.avatar} | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players</span>
+            <div title="${item.avatar}" class="css-8uhtka bme-avatar-container ${zoomable ? "bme-zoomable-avatar" : ""}">
+                <div class="bme-avatar-placeholder">
+                    <div>
+                        <img src="https://avatars.fastly.steamstatic.com/${item.avatar}_full.jpg" class="bme-avatar-identifier">
+                    </div>
+                </div>
+                <span class="css-q39y9k" title="${item.avatar}">${item.avatar}${item.avatarHits !== "N/A" ? ` | Seen on ${item.avatarHits < 101 ? item.avatarHits : "100+"} players` : ""}</span>
             </div>
         </td>
         <td data-title="Type">

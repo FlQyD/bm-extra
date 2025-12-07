@@ -1,11 +1,12 @@
 import { getMain, getTimeString } from "./misc.js";
 
+let insertSidebarsProcess = false;
 export async function insertSidebars() {
-    const elementsToRemove = document.querySelectorAll(".bme-sidebar");
-    elementsToRemove.forEach(item => item.remove())
-
     const mainElement = await getMain();
     if (!mainElement) return console.error("BM-EXTRA: Failed to locate parent of rconContainer for sidebar placements.");
+
+    const elementsToRemove = document.querySelectorAll(".bme-sidebar");
+    elementsToRemove.forEach(item => item.remove())
 
     const left = getSidebarElement("left");
     const right = getSidebarElement("right");
@@ -26,7 +27,7 @@ function getSidebarElement(side) {
 export async function insertFriendsSidebarElement(steamFriends, connectedPlayersData, connectedPlayersBanData, server) {
     steamFriends = await steamFriends;
     server = await server;
-    
+
     if (typeof (steamFriends) !== "string") {
         const onlineIds = server.map(item => item.steamId);
         steamFriends = steamFriends.map(item => {
@@ -50,11 +51,11 @@ export async function insertFriendsSidebarElement(steamFriends, connectedPlayers
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.friends.spot
-    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
-    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
+    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
     const steamFriendsContainer = getSteamFriendsContainer(steamFriends);
-    parentElement.append(steamFriendsContainer);
+    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 }
 export async function insertHistoricFriendsSidebarElement(historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server) {
     steamFriends = await steamFriends;
@@ -64,7 +65,7 @@ export async function insertHistoricFriendsSidebarElement(historicFriends, steam
     steamFriends = steamFriends.map(item => item.steamId);
 
     const onlineIds = server.map(item => item.steamId);
-    
+
     const rustApiFriends = (await historicFriends.rustApi)
         .filter(friend => !steamFriends.includes(friend.steamId))
         .map(item => {
@@ -87,11 +88,11 @@ export async function insertHistoricFriendsSidebarElement(historicFriends, steam
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.historicFriends.spot
-    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
-    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
+    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
     const steamFriendsContainer = getHistoricSteamFriendsContainer(rustApiFriends, sidebarSettings.historicFriends);
-    parentElement.append(steamFriendsContainer);
+    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 
 }
 function getPlayerSteamData(steamId, playerData) {
@@ -162,17 +163,17 @@ export async function insertTeaminfoSidebarElement(team, connectedPlayersData, c
         const banData = getPlayerSteamData(member.steamId, connectedPlayersBanData);
 
         return { ...member, steamData, banData }
-    })    
+    })
 
     const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.currentTeam.spot
-    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
-    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
+    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
     const element = getTeamInfoElement(team.teamId, teamMembers, team.server, team.raw);
-    parentElement.append(element);
+    if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(element);
 }
 function getTeamInfoElement(teamId, teamMembers, server, raw) {
     const element = document.createElement("div");
@@ -234,6 +235,26 @@ function getTeamInfoBody(teamId, teamMembers, raw) {
     }
 
     return wrapper;
+}
+
+export async function updatePlayerProfileElements(cache) {
+    const connectedPlayersData = cache.connectedPlayersData;
+    const connectedPlayersBanData = cache.connectedPlayersBanData;
+
+    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
+
+    const profiles = document.querySelectorAll(".player-missing-data, .player-missing-ban-data");
+    for (const profile of profiles) {
+        const playerData = JSON.parse(profile.dataset.save);
+
+        playerData.steamData = getPlayerSteamData(playerData.steamId, connectedPlayersData);
+        playerData.banData = getPlayerSteamData(playerData.steamId, connectedPlayersBanData);
+
+        const playerElement = getPlayerElement(playerData, sidebarSettings.historicFriends);
+
+        profile.replaceWith(playerElement)
+    }
 }
 
 function getPlayerElement(player, settings) {
@@ -398,26 +419,6 @@ function getBmButton(steamId) {
     return element;
 }
 
-export async function updatePlayerProfileElements(cache) {
-    const connectedPlayersData = cache.connectedPlayersData;
-    const connectedPlayersBanData = cache.connectedPlayersBanData;
-
-    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
-
-    const profiles = document.querySelectorAll(".player-missing-data, .player-missing-ban-data");
-    for (const profile of profiles) {
-        const playerData = JSON.parse(profile.dataset.save);
-
-        playerData.steamData = getPlayerSteamData(playerData.steamId, connectedPlayersData);
-        playerData.banData = getPlayerSteamData(playerData.steamId, connectedPlayersBanData);
-
-        const playerElement = getPlayerElement(playerData, sidebarSettings.historicFriends);
-
-        profile.replaceWith(playerElement)
-    }
-}
-
 export async function insertPublicBansSidebarElement(publicBans) {
     publicBans = await publicBans;
 
@@ -425,11 +426,11 @@ export async function insertPublicBansSidebarElement(publicBans) {
     if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
 
     const spot = sidebarSettings.publicBans.spot
-    const parentElement = document.getElementById(`bme-sidebar-${spot}`);
-    if (!parentElement) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
+    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
     const publicBansElement = getPublicBansElement(publicBans);
-    parentElement.appendChild(publicBansElement);
+    if (!sidebarSlot.hasChildNodes()) sidebarSlot.appendChild(publicBansElement);
 }
 function getPublicBansElement(publicBans) {
     const element = document.createElement("div");

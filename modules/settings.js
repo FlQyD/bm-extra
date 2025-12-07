@@ -100,7 +100,7 @@ function getOverviewSettings() {
     )
     const showBmInfoPanel = getToggleSettingsElement(
         "Show BM information",
-        "Shows detailed information that is stored by battlemetrics and usually not visible by default",
+        "Shows detailed information that is stored by battlemetrics and usually it is not visible by default",
         null, settingsBucket, "showInfoPanel", settings.showInfoPanel
     );
     const removeSteamInfo = getToggleSettingsElement(
@@ -115,7 +115,7 @@ function getOverviewSettings() {
     )
     const advancedBans = getToggleSettingsElement(
         "Advanced bans",
-        "Update ban reasons for a more readable format",
+        "Update ban reasons for a more readable format | May not properly work on other servers.",
         null, settingsBucket, "advancedBans", settings.advancedBans
     )
     const closeAdminLog = getToggleSettingsElement(
@@ -170,7 +170,7 @@ function getIdentifierSettings() {
     )
     const showIspAsnData = getToggleSettingsElement(
         "Show extra IP info",
-        "Shows the name of the ISP and the it's ASN number on the IP addresses.",
+        "Shows the name of the ISP and it's ASN number on the IP addresses.",
         null, settingsBucket, "showIspAndAsnData", settings.showIspAndAsnData
     )
     const highlightVpn = getToggleSettingsElement(
@@ -208,12 +208,19 @@ function getIdentifierSettings() {
         "Display the avatars as identifiers that the player used in the past. It will only work if the identifiers are sorted by Type.",
         ["RUST API - HA"], settingsBucket, "displayAvatars", settings.displayAvatars
     )
-
+    const avatarsSegment = document.createElement("div")
+    avatarsSegment.classList.add("bme-settings-segment");
+    const zoomableAvatars = getToggleSettingsElement(
+        "Zoomable Avatars",
+        "Make the Avatars grow to their full sizes so you can get a better view of them.",
+        null, settingsBucket, "zoomableAvatars", settings.zoomableAvatars
+    )
+    avatarsSegment.append(zoomableAvatars)
 
     const resetButton = getResetButton("bm-identifier")
     element.append(
         showAvatarToggle, showIspAsnData, highlightVpn, vpnSegment,
-        displayAvatars,
+        displayAvatars, avatarsSegment,
 
         resetButton,
     )
@@ -955,6 +962,7 @@ function checkIdentifierSettings() {
         if (typeof (settings) !== "object") throw new Error("Settings error");
         if (typeof (settings.showAvatar) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.displayAvatars) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.zoomableAvatars) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.showIspAndAsnData) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.highlightVpn) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.removeVpnLabel) !== "boolean") throw new Error("Settings error");
@@ -971,6 +979,7 @@ function getDefaultIdentifierSettings() {
     const settings = {};
     settings.showAvatar = false;
     settings.displayAvatars = false;
+    settings.zoomableAvatars = true;
     settings.showIspAndAsnData = true;
     settings.highlightVpn = false;
     settings.removeVpnLabel = true;

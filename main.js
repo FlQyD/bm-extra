@@ -88,7 +88,7 @@ async function onIdentifierPage(bmId) {
     if (settings.showAvatar) displayAvatar(bmId, playerCache.bmProfile, playerCache.steamData);
     if (settings.showIspAndAsnData) showExtraDataOnIps(bmId, playerCache.bmProfile)
     if (settings.highlightVpn) highlightVpnIdentifiers(bmId, { label: settings.removeVpnLabel, threshold: settings.vpnAbove, background: settings.vpnBgColor, opacity: settings.vpnOpacity })
-    if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars)
+    if (settings.displayAvatars) displayAvatars(bmId, playerCache.identifiers.avatars, settings.zoomableAvatars)
 
     swapBattleEyeGuid(bmId, playerCache.bmProfile);
 }
@@ -115,25 +115,100 @@ async function sidebar(bmId, playerCache) {
 function setupCacheFor(bmId) {
     const authToken = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
     if (!authToken) return;
-
+    const settings = {}
+    settings.overview = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"));
+    settings.identifier = JSON.parse(localStorage.getItem("BME_IDENTIFIER_SETTINGS"));
+    settings.sidebar = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    console.log(settings);
+    
     if (!cache[bmId]) cache[bmId] = {};
-    cache[bmId].bmProfile = getBmProfileData(bmId, authToken);
-    cache[bmId].steamFriends = getSteamFriends(cache[bmId].bmProfile, "steam");
+    if (validate("bmProfile", settings)) 
+        cache[bmId].bmProfile = getBmProfileData(bmId, authToken);
+
+    if (validate("steamFriends", settings)) 
+        cache[bmId].steamFriends = getSteamFriends(cache[bmId].bmProfile, "steam");
+
     cache[bmId].historicFriends = {}
-    cache[bmId].historicFriends.rustApi = getSteamFriends(cache[bmId].bmProfile, "rust-api");
+    if (validate("historicFriends", settings)) 
+        cache[bmId].historicFriends.rustApi = getSteamFriends(cache[bmId].bmProfile, "rust-api");
+
     cache[bmId].identifiers = {}
-    cache[bmId].identifiers.avatars = getSteamAvatars(cache[bmId].bmProfile);
-    cache[bmId].team = getCurrentTeam(cache[bmId].bmProfile);
-    cache[bmId].publicBans = getPublicBans(cache[bmId].bmProfile);
+    if (validate("steamAvatars", settings)) 
+        cache[bmId].identifiers.avatars = getSteamAvatars(cache[bmId].bmProfile);
+
+    if (validate("currentTeam", settings)) 
+        cache[bmId].team = getCurrentTeam(cache[bmId].bmProfile);
+
+    if (validate("publicBans", settings)) 
+        cache[bmId].publicBans = getPublicBans(cache[bmId].bmProfile);
+    
     //cache.historicFriends.steamidCom
     //cache.historicFriends.steamidUk
+    
+    if (validate("bmActivity", settings)) 
+        cache[bmId].bmActivity = getBmActivity(bmId, authToken);
+    
+    if (validate("steamData", settings)) 
+        cache[bmId].steamData = getSteamData(bmId);
+    
+    if (validate("bmBanData", settings)) 
+        cache[bmId].bmBanData = getBmBanData(bmId, authToken);
 
-    cache[bmId].bmActivity = getBmActivity(bmId, authToken);
-    cache[bmId].steamData = getSteamData(bmId);
-    cache[bmId].bmBanData = getBmBanData(bmId, authToken);
-    cache[bmId].serverPop = getCurrentServersPopulation(cache[bmId].bmProfile, authToken)
+    if (validate("serverPop", settings)) 
+        cache[bmId].serverPop = getCurrentServersPopulation(cache[bmId].bmProfile, authToken)
 
     loadPlayerData(cache[bmId].steamFriends, cache[bmId].historicFriends.rustApi, cache[bmId].team);
+}
+function validate(section, { overview, identifier, sidebar }) {
+    if (section === "bmProfile") {
+        if (overview.showServer) return true;
+        if (overview.showInfoPanel) return true;
+        if (overview.showAvatar) return true;
+        if (overview.swapBattleEyeGuid) return true;
+        if (identifier.showAvatar) return true;
+        if (identifier.showIspAndAsnData) return true;
+
+        //Indirect
+        if (identifier.displayAvatars) return true;
+        if (sidebar.currentTeam.enabled) return true;
+        if (sidebar.friends.enabled) return true;
+        if (sidebar.historicFriends.enabled) return true;
+        if (sidebar.publicBans.enabled) return true;
+
+    } else if (section === "steamFriends") {
+        if (sidebar.friends.enabled) return true;
+        if (sidebar.historicFriends.enabled) return true;
+    
+    } else if (section === "historicFriends") {
+        if (sidebar.historicFriends.enabled) return true;
+
+    } else if (section === "steamAvatars") {
+        if (identifier.displayAvatars) return true;
+
+    } else if (section === "currentTeam") {
+        if (sidebar.currentTeam.enabled) return true;
+
+    } else if (section === "publicBans") {
+        if (sidebar.publicBans.enabled) return true;
+
+    } else if (section === "bmActivity") {
+        if (overview.showInfoPanel) return true;
+        
+    } else if (section === "steamData") {
+        if (overview.showAvatar) return true;
+        if (overview.showInfoPanel) return true;
+        if (identifier.showAvatar) return true;
+        
+    } else if (section === "bmBanData") {
+        if (overview.advancedBans) return true;
+        
+    } else if (section === "serverPop") {
+        if (sidebar.friends.enabled) return true;
+        if (sidebar.historicFriends.enabled) return true;
+        
+    }
+
+    return false;
 }
 async function getSteamData(bmId) {
     try {
@@ -210,7 +285,7 @@ async function loadPlayerData(friends, historicFriends, team) {
 
     const uniqueSteamIds = [];
     console.log(cache);
-    
+
 
     if (typeof (friends) !== "string")
         friends.forEach(friend => { if (!uniqueSteamIds.includes(friend.steamId)) uniqueSteamIds.push(friend.steamId) });
@@ -325,11 +400,7 @@ async function getSteamAvatars(bmProfile) {
     const steamId = steamIdObject?.attributes?.identifier;
     const currentAvatarUrl = steamIdObject?.attributes?.metadata?.profile?.avatar;
     const avatarHash = currentAvatarUrl?.split("/")[3]?.substring(0, 40);
-    console.log(steamIdObject?.attributes?.lastSeen);
-    
     const lastSeen = Math.floor(new Date(steamIdObject?.attributes?.metadata?.profile?.lastChecked ?? steamIdObject?.attributes?.lastSeen).getTime() / 1000);
-    console.log(lastSeen);
-    
     const avatarHits = "N/A";
 
 
