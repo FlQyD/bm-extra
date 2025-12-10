@@ -1,4 +1,4 @@
-export function getInfoPanel(bmSteamData, bmData) {
+export function getInfoPanel(bmSteamData, bmData, rustPremium) {
     const element = document.createElement("div");
 
     const header = document.createElement("div");
@@ -11,7 +11,7 @@ export function getInfoPanel(bmSteamData, bmData) {
         if (arrow.classList.contains("closed")) {
             body.style.height = "0px";
         } else {
-            body.style.height = "240px";
+            body.style.height = "26 0px";
         }
 
 
@@ -31,14 +31,14 @@ export function getInfoPanel(bmSteamData, bmData) {
     body.classList.add("bme-section-body");
     element.appendChild(body);
 
-    body.appendChild(getSteamInfoPanel(bmSteamData));
+    body.appendChild(getSteamInfoPanel(bmSteamData, rustPremium));
     body.appendChild(getBmInfoPanel(bmData));
 
     return element;
 }
 
 
-function getSteamInfoPanel(steam) {
+function getSteamInfoPanel(steam, rustPremium) {
     const settings = JSON.parse(localStorage.getItem("BME_BM_INFO_SETTINGS"))
     const element = document.createElement("div");
 
@@ -58,14 +58,15 @@ function getSteamInfoPanel(steam) {
     items.push(...getVisibilityElements(steam))
     items.push(...getSetupStateElements(steam));
     items.push(...getLimitedAccountElements(steam));
+    items.push(...getPremiumStateElement(rustPremium));
     items.push(...getGameBanCountElements(steam));
     items.push(...getVacBanCountElements(steam));
     items.push(...getDaysSinceElements(steam));
 
     const isHistoric = steam?.gamesLastChecked ? Date.now() - steam.gamesLastChecked > 7 * ONE_DAY : null;
-    items.push(...getSteamGameCountElements(steam, settings.steamGameCountColors, isHistoric));
     items.push(...getSteamRustHoursElements(steam, settings.steamRustHoursColors, isHistoric));
     items.push(...getSteamCombinedHoursElements(steam, settings.steamCombinedHoursColors, isHistoric));
+    items.push(...getSteamGameCountElements(steam, settings.steamGameCountColors, isHistoric));
     if (isHistoric) items.push(...getHistoricTimestampElements(steam, settings.gamesLastCheckedColors))
     for (const item of items) list.appendChild(item);
 
@@ -98,6 +99,16 @@ function getSetupStateElements(steam) {
     return [title, value];
 
 }
+function getPremiumStateElement(rustPremium) {
+    const title = createHtmlElement("dt", "Premium:");
+
+    const valueString = rustPremium === null ? "Unknown" : rustPremium;
+    const currentClass = rustPremium === null ? null : rustPremium ? "bme-green-text" : "bme-red-text";
+    const value = createHtmlElement("dd", valueString, currentClass ? [currentClass] : []);
+    return [title, value];
+
+}
+
 function getLimitedAccountElements(steam) {
     const title = createHtmlElement("dt", "Limited:");
 

@@ -12,12 +12,40 @@ export async function displaySettingsButton(bmId) {
     const button = document.createElement("img");
     button.id = "bme-settings-button"
     button.src = chrome.runtime.getURL('assets/img/settings.png');
-    
+
     const { displaySettings } = await import(chrome.runtime.getURL('./modules/settings.js'));
     button.addEventListener("click", displaySettings)
-    
+
     const testElement = document.getElementById("bme-settings-button");
     if (!testElement) title.appendChild(button);
+}
+
+export async function displayAlertLink(bmId) {
+    const container = await getRconElement();
+    let navbar = null;
+    for (const element of Array.from(container.parentNode.parentNode.children)) {
+        if (element.classList.contains("bme-sidebar") || element.classList.contains("main")) continue;
+        navbar = Array.from(element.lastChild.children);
+        break;
+    }
+    if (!navbar) return console.error(`BM-EXTRA: Failed to locate navbar!`);
+    console.log(navbar);
+    
+    for (const navElement of navbar) {
+        console.log();
+        
+        if (navElement.innerText.trim() !== "Ban Player") continue
+        const link = document.createElement("li");
+        link.classList.add("bme-alert-element")
+        link.innerHTML = `
+        <a href="/alerts/add?player=${bmId}" target="_blank">
+            <img class="bme-alert-icon" src="${chrome.runtime.getURL("assets/img/add-alert.png")}">
+            <p>Add Alert</p>
+        </a>`;
+        navElement.before(link);
+        return;
+    }
+    console.error(`BM-EXTRA: Failed to display alert link.`);
 }
 
 export async function displayServerActivity(bmId, bmProfile) {
@@ -87,10 +115,11 @@ function getCurrentServersElement(servers) {
     return element;
 }
 
-export async function displayInfoPanel(bmId, bmProfile, steamData, bmActivity) {
+export async function displayInfoPanel(bmId, bmProfile, steamData, bmActivity, rustPremium) {
     bmProfile = await bmProfile;
     steamData = await steamData;
     bmActivity = await bmActivity;
+    rustPremium = await rustPremium;
 
     const steamIdObject = getSteamIdObject(bmProfile.included);
     const bmSteamData = getSteamData(steamIdObject, steamData);
@@ -109,7 +138,7 @@ export async function displayInfoPanel(bmId, bmProfile, steamData, bmActivity) {
     if (!identifierDiv) return;
 
     const { getInfoPanel } = await import(chrome.runtime.getURL('./modules/getInfoPanel.js'));
-    const infoPanel = getInfoPanel(bmSteamData, bmData);
+    const infoPanel = getInfoPanel(bmSteamData, bmData, rustPremium);
     infoPanel.id = "bme-info-panel";
 
     if (checkIfAlright(bmId, "bme-info-panel")) return;

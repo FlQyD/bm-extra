@@ -17,7 +17,7 @@ export function getAuthToken() {
 }
 
 let _rconElement = null;
-export async function getRconElement() {
+export async function getRconElement() {    
     if (!_rconElement || Date.now() > (_rconElement.timestamp + 50)) {
         _rconElement = {
             timestamp: Date.now(),

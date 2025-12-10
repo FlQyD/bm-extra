@@ -60,6 +60,7 @@ body {
     border-radius: 3px;
     border-left: 3px solid #151515;
     border-right: 3px solid #151515;
+    transition: 200ms;
 }
 
 .player-container p {
@@ -324,6 +325,32 @@ body {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
-.player-online{
-    border-color: #00ffff;
+.bme-comparator-wrapper{
+    width: 340px;
+    height: 50px;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.bme-comparator-wrapper > input{
+    width: 320px;
+    height: 35px;
+
+    border-radius: 4px;
+    outline: none;
+    border: 2px solid #000000;
+    background: #00000020;
+    padding: 0px 10px;
+    font-size: 22px;
+    line-height: 1;
+}
+.bme-comparator-wrapper>input:focus{
+    background: #ffffff20;
+}
+.bme-comparator-hit {
+    border-color: var(--hit-color) !important;
+}
+.player-online {
+    border-color: var(--online-color);
 }

@@ -98,6 +98,11 @@ function getOverviewSettings() {
         "Shows the players avatar when it's available next to his name",
         null, settingsBucket, "showAvatar", settings.showAvatar
     )
+    const showAlertToggle = getToggleSettingsElement(
+        "Show alert",
+        "Shows the button that redirects to add an alert to the player.",
+        null, settingsBucket, "showAlert", settings.showAlert
+    )
     const showBmInfoPanel = getToggleSettingsElement(
         "Show BM information",
         "Shows detailed information that is stored by battlemetrics and usually it is not visible by default",
@@ -141,7 +146,7 @@ function getOverviewSettings() {
     const resetButton = getResetButton("bm-overview");
 
     element.append(
-        showAvatarToggle, showBmInfoPanel, removeSteamInfo, showServer,
+        showAvatarToggle, showAlertToggle, showBmInfoPanel, removeSteamInfo, showServer,
         advancedBans, closeAdminLog, swapBattleEyeGuid,
         maxNamesOnProfile, maxIpsOnProfile,
 
@@ -395,6 +400,42 @@ function getSidebarSettings() {
     const settingsBucket = "BME_SIDEBAR_SETTINGS";
     const settings = JSON.parse(localStorage.getItem(settingsBucket));
 
+
+    const currentTeamEnabled = getToggleSettingsElement(
+        "Show Current Team",
+        "Shows the current team of the player.",
+        null, settingsBucket, "currentTeam-enabled", settings.currentTeam.enabled
+    )
+    const currentTeamSegment = document.createElement("div")
+    currentTeamSegment.classList.add("bme-settings-segment");
+
+    const currentTeamSpot = getSwitchSettingsElement(
+        "Position:",
+        "Choose which sidebar spot should the current team be present.",
+        null, settingsBucket, "currentTeam-spot", getSpotDisplay(settings.currentTeam.spot), spots
+    )
+    currentTeamSegment.append(currentTeamSpot)
+
+    const friendComparatorEnabled = getToggleSettingsElement(
+        "Player Comparator",
+        "Allows you to compare a friend list to a server's player list or to another friendlist.",
+        null, settingsBucket, "friendComparator-enabled", settings.friendComparator.enabled
+    )
+    const friendComparatorSegment = document.createElement("div")
+    friendComparatorSegment.classList.add("bme-settings-segment");
+
+    const friendComparatorSpot = getSwitchSettingsElement(
+        "Position:",
+        "Choose which sidebar spot should the player comparator be present.",
+        null, settingsBucket, "friendComparator-spot", getSpotDisplay(settings.friendComparator.spot), spots
+    )
+    const comparatorColor = getColorSettingsElement(
+        "Active Color:",
+        "This color will be used to highlight the result of the comparison.",
+        null, settingsBucket, "friendComparator-color", settings.friendComparator.color
+    )
+    friendComparatorSegment.append(friendComparatorSpot, comparatorColor)
+
     const steamFriendsEnabled = getToggleSettingsElement(
         "Show Friends",
         "Shows the current steam Friends on the side panel.",
@@ -408,7 +449,17 @@ function getSidebarSettings() {
         "Choose which sidebar spot should the steam friends be present.",
         null, settingsBucket, "friends-spot", getSpotDisplay(settings.friends.spot), spots
     )
-    steamFriendsSegment.append(steamFriendsSpot)
+    const steamFriendsShowOnline = getToggleSettingsElement(
+        "Highlight online friends",
+        "Highlights the online friends that are on the same server with the player.",
+        null, settingsBucket, "friends-showOnline", settings.friends.showOnline
+    )
+    const steamFriendsOnlineColor = getColorSettingsElement(
+        "Online friends border color:",
+        "Choose the color the online friends supposed to be highlighted with.",
+        null, settingsBucket, "friends-onlineColor", settings.friends.onlineColor
+    )
+    steamFriendsSegment.append(steamFriendsSpot, steamFriendsShowOnline, steamFriendsOnlineColor)
 
     const historicFriendsEnabled = getToggleSettingsElement(
         "Show Historic Friends",
@@ -435,38 +486,6 @@ function getSidebarSettings() {
     )
     historicFriendsSegment.append(historicFriendsSpot, seenOnOrigin, seenOnFriend)
 
-
-    const currentTeamEnabled = getToggleSettingsElement(
-        "Show Current Team",
-        "Shows the current team of the player.",
-        null, settingsBucket, "currentTeam-enabled", settings.currentTeam.enabled
-    )
-    const currentTeamSegment = document.createElement("div")
-    currentTeamSegment.classList.add("bme-settings-segment");
-
-    const currentTeamSpot = getSwitchSettingsElement(
-        "Position:",
-        "Choose which sidebar spot should the current team be present.",
-        null, settingsBucket, "currentTeam-spot", getSpotDisplay(settings.currentTeam.spot), spots
-    )
-    currentTeamSegment.append(currentTeamSpot)
-
-
-    const friendComparatorEnabled = getToggleSettingsElement(
-        "Player Comparator",
-        "Allows you to compare a friend list to a server's player list or to another friendlist.",
-        null, settingsBucket, "friendComparator-enabled", settings.friendComparator.enabled
-    )
-    const friendComparatorSegment = document.createElement("div")
-    friendComparatorSegment.classList.add("bme-settings-segment");
-
-    const friendComparatorSpot = getSwitchSettingsElement(
-        "Position:",
-        "Choose which sidebar spot should the player comparator be present.",
-        null, settingsBucket, "friendComparator-spot", getSpotDisplay(settings.friendComparator.spot), spots
-    )
-    friendComparatorSegment.append(friendComparatorSpot)
-
     const publicBansEnabled = getToggleSettingsElement(
         "Show Public bans",
         "Shows the public bans on the current player",
@@ -484,10 +503,10 @@ function getSidebarSettings() {
 
     const resetButton = getResetButton("bm-sidebar")
     element.append(
-        steamFriendsEnabled, steamFriendsSegment,
-        historicFriendsEnabled, historicFriendsSegment,
         currentTeamEnabled, currentTeamSegment,
         friendComparatorEnabled, friendComparatorSegment,
+        steamFriendsEnabled, steamFriendsSegment,
+        historicFriendsEnabled, historicFriendsSegment,
         publicBansEnabled, publicBansSegment,
         resetButton
     )
@@ -929,6 +948,7 @@ function checkOverviewSettings() {
     try {
         const settings = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"));
         if (typeof (settings) !== "object") throw new Error("Settings error");
+        if (typeof (settings.showAlert) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.showAvatar) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.showServer) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.showInfoPanel) !== "boolean") throw new Error("Settings error");
@@ -1046,6 +1066,8 @@ function checkSidebarSettings() {
         if (typeof (settings.friends) !== "object") throw new Error("Settings error");
         if (typeof (settings.friends.enabled) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.friends.spot) !== "string") throw new Error("Settings error");
+        if (typeof (settings.friends.showOnline) !== "boolean") throw new Error("Settings error");
+        if (typeof (settings.friends.onlineColor) !== "string") throw new Error("Settings error");
         if (typeof (settings.historicFriends) !== "object") throw new Error("Settings error");
         if (typeof (settings.historicFriends.enabled) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.historicFriends.spot) !== "string") throw new Error("Settings error");
@@ -1057,6 +1079,7 @@ function checkSidebarSettings() {
         if (typeof (settings.friendComparator) !== "object") throw new Error("Settings error");
         if (typeof (settings.friendComparator.enabled) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.friendComparator.spot) !== "string") throw new Error("Settings error");
+        if (typeof (settings.friendComparator.color) !== "string") throw new Error("Settings error");
         if (typeof (settings.publicBans) !== "object") throw new Error("Settings error");
         if (typeof (settings.publicBans.enabled) !== "boolean") throw new Error("Settings error");
         if (typeof (settings.publicBans.spot) !== "string") throw new Error("Settings error");
@@ -1070,6 +1093,8 @@ function getDefaultSidebarSettings() {
     settings.friends = {}
     settings.friends.enabled = true;
     settings.friends.spot = "right-slot-2"
+    settings.friends.showOnline = true;
+    settings.friends.onlineColor = "#00ffff";
 
     settings.historicFriends = {}
     settings.historicFriends.enabled = false;
@@ -1084,6 +1109,8 @@ function getDefaultSidebarSettings() {
     settings.friendComparator = {}
     settings.friendComparator.enabled = false;
     settings.friendComparator.spot = "right-slot-1";
+    settings.friendComparator.color = "#ffffff"
+
     
     settings.publicBans = {}
     settings.publicBans.enabled = false;

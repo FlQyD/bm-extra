@@ -44,6 +44,7 @@
     "host_permissions": [
         "*://api.battlemetrics.com/*",
         "*://api.steampowered.com/*",
-        "*://rust-api.flqyd.dev/*"
+        "*://rust-api.flqyd.dev/*",
+        "*://rust-api.facepunch.com/*"
     ]
 }

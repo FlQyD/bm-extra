@@ -1,4 +1,4 @@
-import { getMain, getTimeString } from "./misc.js";
+import { getMain, getSteamFriendlistFromRustApi, getSteamFriendlistFromSteam, getTimeString } from "./misc.js";
 
 let insertSidebarsProcess = false;
 export async function insertSidebars() {
@@ -24,7 +24,7 @@ function getSidebarElement(side) {
     return element;
 }
 
-export async function insertFriendsSidebarElement(steamFriends, connectedPlayersData, connectedPlayersBanData, server) {
+export async function insertFriendsSidebarElement(steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
     server = await server;
 
@@ -47,17 +47,14 @@ export async function insertFriendsSidebarElement(steamFriends, connectedPlayers
         })
     }
 
-    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
-
-    const spot = sidebarSettings.friends.spot
+    const spot = settings.friends.spot
     const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
     if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
-    const steamFriendsContainer = getSteamFriendsContainer(steamFriends);
+    const steamFriendsContainer = getSteamFriendsContainer(steamFriends, settings);
     if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 }
-export async function insertHistoricFriendsSidebarElement(historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server) {
+export async function insertHistoricFriendsSidebarElement(historicFriends, steamFriends, connectedPlayersData, connectedPlayersBanData, server, settings) {
     steamFriends = await steamFriends;
     server = await server;
 
@@ -83,15 +80,11 @@ export async function insertHistoricFriendsSidebarElement(historicFriends, steam
         return value1 - value2;
     });
 
-
-    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
-
-    const spot = sidebarSettings.historicFriends.spot
+    const spot = settings.historicFriends.spot;
     const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
     if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
-    const steamFriendsContainer = getHistoricSteamFriendsContainer(rustApiFriends, sidebarSettings.historicFriends);
+    const steamFriendsContainer = getHistoricSteamFriendsContainer(rustApiFriends, settings);
     if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(steamFriendsContainer);
 
 }
@@ -109,13 +102,13 @@ function getHistoricSteamFriendsContainer(historicFriends, settings) {
     return element;
 
 }
-function getSteamFriendsContainer(steamFriends) {
+function getSteamFriendsContainer(steamFriends, settings) {
     const element = document.createElement("div");
     element.classList.add("bme-sidebar-friends")
 
     const titleText = typeof (steamFriends) === "string" ? "Steam Friends:" : `Steam Friends(${steamFriends.length}):`;
     const header = getFriendlistHeader(titleText);
-    const body = getFriendlistBody(steamFriends)
+    const body = getFriendlistBody(steamFriends, settings)
 
     element.append(header, body);
     return element;
@@ -155,7 +148,53 @@ function getFriendlistBody(friends, settings, isHistoric) {
     return container;
 }
 
-export async function insertTeaminfoSidebarElement(team, connectedPlayersData, connectedPlayersBanData) {
+export async function insertFriendComparator() {
+    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
+    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
+
+    const spot = sidebarSettings.friendComparator.spot;
+    const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
+    if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
+    const color = sidebarSettings.friendComparator.color;
+
+    const element = document.createElement("div");
+    element.classList.add("bme-comparator-wrapper")
+
+    const input = document.createElement("input");
+    input.addEventListener("change", async e => {
+        const resetElements = Array.from(document.getElementsByClassName("bme-comparator-hit"));
+        for (const element of resetElements) element.classList.remove("bme-comparator-hit");
+
+        const value = e.target.value;
+        let feedbackColor = "green";
+        if (value.length !== 17) feedbackColor = "red";
+        if (isNaN(Number(value))) feedbackColor = "red";
+        if (!value.startsWith("7656")) feedbackColor = "red";
+        if (feedbackColor === "green") {
+            const steamFriends = await getSteamFriendlistFromSteam(value);
+            const historicFriends = await getSteamFriendlistFromRustApi(value);
+
+            const friends = [];
+            if (typeof (steamFriends) !== "string") steamFriends.forEach(item => friends.push(item.steamId));
+            if (typeof (historicFriends) !== "string") historicFriends.forEach(item => { if (!friends.includes(item.steamId)) friends.push(item.steamId) });
+
+            const players = Array.from(document.getElementsByClassName("player-container"));
+            for (const player of players) {
+                if (friends.includes(player.title)) {
+                    player.style.setProperty("--hit-color", color);
+                    player.classList.add("bme-comparator-hit");
+                }
+            }
+        }
+        e.target.classList.add(`bme-compare-${feedbackColor}`)
+        setTimeout(() => { e.target.classList.remove(`bme-compare-${feedbackColor}`) }, 200);
+    })
+    element.append(input);
+
+    sidebarSlot.append(element);
+}
+
+export async function insertTeaminfoSidebarElement(team, connectedPlayersData, connectedPlayersBanData, settings) {
     team = await team;
 
     const teamMembers = team.members.map(member => {
@@ -165,21 +204,18 @@ export async function insertTeaminfoSidebarElement(team, connectedPlayersData, c
         return { ...member, steamData, banData }
     })
 
-    const sidebarSettings = JSON.parse(localStorage.getItem("BME_SIDEBAR_SETTINGS"));
-    if (!sidebarSettings) return console.error(`BME-EXTRA: Sidebar settings are missing!`)
-
-    const spot = sidebarSettings.currentTeam.spot
+    const spot = settings.currentTeam.spot
     const sidebarSlot = document.getElementById(`bme-sidebar-${spot}`);
     if (!sidebarSlot) return console.error(`BM-EXTRA: Sidebar element couldn't be located: ${`bme-sidebar-${spot}`}`)
 
-    const element = getTeamInfoElement(team.teamId, teamMembers, team.server, team.raw);
+    const element = getTeamInfoElement(team.teamId, teamMembers, team.server, team.raw, settings);
     if (!sidebarSlot.hasChildNodes()) sidebarSlot.append(element);
 }
-function getTeamInfoElement(teamId, teamMembers, server, raw) {
+function getTeamInfoElement(teamId, teamMembers, server, raw, settings) {
     const element = document.createElement("div");
     element.classList.add("bm-sidebar-teaminfo")
     const header = getTeamInfoHeader(teamId, teamMembers, server, raw);
-    const body = getTeamInfoBody(teamId, teamMembers, raw)
+    const body = getTeamInfoBody(teamId, teamMembers, raw, settings)
     element.append(header, body);
 
     return element;
@@ -218,19 +254,20 @@ function getTeamInfoHeader(teamId, teamMembers, serverName, raw) {
 
     return header;
 }
-function getTeamInfoBody(teamId, teamMembers, raw) {
+function getTeamInfoBody(teamId, teamMembers, raw, settings) {
     const wrapper = document.createElement("div");
     wrapper.classList.add("bme-team-body")
-    if (teamId === -1 || teamId === "error") {
+    if (teamId === -1 || teamId === "error" || raw === "NO_SERVER") {
         const p = document.createElement("p");
-        p.innerText = teamId === -1 ? raw : "Failed to request teaminfo!";
+        if (teamId === -1) p.innerText = raw;
+        if (teamId === "error") p.innerText = "Failed to request teaminfo!";
 
         wrapper.appendChild(p);
         return wrapper;
     }
 
     for (const member of teamMembers) {
-        const player = getPlayerElement(member);
+        const player = getPlayerElement(member, settings);
         wrapper.appendChild(player)
     }
 
@@ -251,13 +288,13 @@ export async function updatePlayerProfileElements(cache) {
         playerData.steamData = getPlayerSteamData(playerData.steamId, connectedPlayersData);
         playerData.banData = getPlayerSteamData(playerData.steamId, connectedPlayersBanData);
 
-        const playerElement = getPlayerElement(playerData, sidebarSettings.historicFriends);
+        const playerElement = getPlayerElement(playerData, sidebarSettings);
 
         profile.replaceWith(playerElement)
     }
 }
 
-function getPlayerElement(player, settings) {
+function getPlayerElement(player, settings) {    
     const avatarValue = player.steamData?.avatar ? player.steamData.avatar : "unknown";
     const nameValue = player.steamData?.name ? player.steamData.name : player.steamId;
     const setupValue = player.steamData?.setup !== undefined ? player.steamData.setup : null;
@@ -273,13 +310,16 @@ function getPlayerElement(player, settings) {
 
     const container = document.createElement("div");
     container.classList.add("player-container");
-    if (player.online) container.classList.add("player-online")
+    if (player.online) {
+        container.classList.add("player-online")
+        container.style.setProperty("--online-color", settings.friends.onlineColor)
+    }
     container.dataset.save = JSON.stringify(data);
     if (!player.steamData) container.classList.add("player-missing-data")
     if (!player.banData) container.classList.add("player-missing-ban-data")
     container.title = player.steamId;
-    if (player?.origin === "origin") container.style.background = settings.seenOnOrigin;
-    if (player?.origin === "friend") container.style.background = settings.seenOnFriend;
+    if (player?.origin === "origin") container.style.background = settings.historicFriends.seenOnOrigin;
+    if (player?.origin === "friend") container.style.background = settings.historicFriends.seenOnFriend;
 
     const avatar = document.createElement("img");
     avatar.src = avatarValue === "unknown" ?

@@ -54,7 +54,7 @@
     display: flex;
     gap: 30px;
 
-    height: 240px;
+    height: 260px;
     transition: 250ms;
     overflow-x: hidden;
 }
@@ -166,7 +166,8 @@
     width: 50px;
     height: 50px;
     position: relative;
-    background: radial-gradient(circle, #000000 0%, #00000000 110%);;
+    background: radial-gradient(circle, #000000 0%, #00000000 110%);
+    ;
 }
 
 .bme-avatar-identifier {
@@ -175,7 +176,7 @@
     display: block;
     transition: 150ms;
     transform-origin: top left;
-    background: radial-gradient(circle, #ffffff 0%, #00000000 200%);;
+    background: radial-gradient(circle, #ffffff 0%, #00000000 200%);
 }
 
 .bme-zoomable-avatar>div:hover .bme-avatar-identifier {
@@ -185,7 +186,44 @@
     z-index: 10000;
 }
 
+.bme-alert-element{
+    height: 34px;
+    background: transparent;
+}
+.bme-alert-element > a {
+    height: 34px;
+    padding: 0px 10px;
+    margin: 0px 3px;
 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+
+    border-radius: 2px;
+    text-decoration: none;
+    
+    opacity: 0.5;
+    transition: 75ms;
+}
+.bme-alert-element p {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    color: #ffffff;
+}
+.bme-alert-element a:hover {
+    background: #ffffff10;
+    text-decoration: none;
+    opacity: 0.85;
+}
+.bme-alert-element a:active {
+    text-decoration: none;
+    opacity: 1;
+}
+.bme-alert-element a:focus {
+    text-decoration: none;
+}
 
 
 

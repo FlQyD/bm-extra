@@ -6,7 +6,7 @@ console.log("Service worker loaded!")
  */
 chrome.runtime.onMessage.addListener(async (request, sender) => {
     if (!request.type.startsWith("BME_")) return;
-    console.log(`${request.type.padEnd(30)} | ${request.apiKey.substring(0, 10)} | ${request.subject.includes(",") ? `Account count: ${request.subject.split(",").length}` : request.subject}`); 
+    console.log(`${request.type.padEnd(30)} | ${request?.apiKey?.substring(0, 10)} | ${request.subject.includes(",") ? `Account count: ${request.subject.split(",").length}` : request.subject}`); 
     
     /**
      * returnObject:
@@ -18,6 +18,7 @@ chrome.runtime.onMessage.addListener(async (request, sender) => {
     if (request.type === "BME_STEAM_FRIENDLIST") return sendFriendlistFromSteam(request.subject, request.apiKey, sender, returnObject);
     if (request.type === "BME_RUST_API_FRIENDLIST") return sendFriendlistFromRustApi(request.subject, request.apiKey, sender, returnObject)
     if (request.type === "BME_RUST_API_AVATARS") return sendAvatarsFromRustApi(request.subject, request.apiKey, sender, returnObject)
+    if (request.type === "BME_PREMIUM_STATUS") return sendPremiumStatus(request.subject, sender, returnObject)
     if (request.type.startsWith("BME_PLAYER_SUMMARIES")) return sendSteamPlayerSummaries(request.subject, request.apiKey, sender, returnObject);
     if (request.type.startsWith("BME_BAN_SUMMARIES")) return sendSteamPlayerBanSummaries(request.subject, request.apiKey, sender, returnObject);
     if (request.type.startsWith("BME_PUBLIC_BANS")) return sendPublicBans(request.subject, request.apiKey, sender, returnObject);
@@ -65,6 +66,30 @@ async function sendFriendlistFromRustApi(steamId, apiKey, sender, returnObject) 
     }
 
 }
+async function sendPremiumStatus(steamId, sender, returnObject) {
+    try {        
+        const resp = await fetch("https://rust-api.facepunch.com/api/premium/verify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: `{"SteamIds":[${steamId}]}`,
+        });
+        if (resp?.status !== 200) throw new Error(`Requesting premium status failed | steamId: ${steamId} | Status: ${resp?.status}`)
+
+        const data = await resp.json();
+        const value = { premium: data.Results[steamId] }
+        
+        returnObject.status = "OK";
+        returnObject.value = value;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    } catch (error) {
+        console.error(error);
+        returnObject.status = "ERROR";
+        returnObject.value = error;
+        return chrome.tabs.sendMessage(sender.tab.id, returnObject);
+    }
+}
 async function sendAvatarsFromRustApi(steamId, apiKey, sender, returnObject) {
     try {
         const resp = await fetch(`https://rust-api.flqyd.dev/getAvatars/${steamId}?accessToken=${apiKey}`);
@@ -80,7 +105,6 @@ async function sendAvatarsFromRustApi(steamId, apiKey, sender, returnObject) {
         returnObject.value = error;
         return chrome.tabs.sendMessage(sender.tab.id, returnObject);
     }
-
 }
 async function sendSteamPlayerSummaries(steamIds, API_KEY, sender, returnObject) {
     try {
