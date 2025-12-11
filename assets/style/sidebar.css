@@ -203,7 +203,8 @@ body {
     opacity: 1;
     pointer-events: auto;
 }
-.bme-ban-inner-div{
+
+.bme-ban-inner-div {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -325,32 +326,66 @@ body {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
-.bme-comparator-wrapper{
+
+.bme-comparator-wrapper {
     width: 340px;
     height: 50px;
-    
+
     display: flex;
     justify-content: center;
     align-items: center;
 }
-.bme-comparator-wrapper > input{
+
+.bme-comparator-wrapper>input {
     width: 320px;
     height: 35px;
 
     border-radius: 4px;
     outline: none;
-    border: 2px solid #000000;
+    border: 2px solid rgb(21, 21, 21);
     background: #00000020;
     padding: 0px 10px;
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
+    background: #ffffff10;
+    transition: 150ms;
+
+    text-align: center;
 }
-.bme-comparator-wrapper>input:focus{
+
+.bme-comparator-wrapper>input:hover {
+    background: #ffffff15;
+}
+.bme-comparator-wrapper>input:active,
+.bme-comparator-wrapper>input:focus {
     background: #ffffff20;
 }
+
+.bme-comparator-yellow {
+    border-color: #ffff00 !important;
+    background:
+        linear-gradient(0deg, #ffff0040 0%, #00000000 40%, #00000000 60%, #ffff0040 100%),
+        linear-gradient(90deg, #ffff0040 0%, #00000000 40%, #00000000 60%, #ffff0040 100%) !important;
+}
+
+.bme-comparator-green {
+    border-color: #00ff00 !important;
+    background:
+        linear-gradient(0deg, #00ff0040 0%, #00000000 40%, #00000000 60%, #00ff0040 100%),
+        linear-gradient(90deg, #00ff0040 0%, #00000000 40%, #00000000 60%, #00ff0040 100%) !important;
+}
+
+.bme-comparator-red {
+    border-color: #ff0000 !important;
+    background:
+        linear-gradient(0deg, #ff000040 0%, #00000000 40%, #00000000 60%, #ff000040 100%),
+        linear-gradient(90deg, #ff000040 0%, #00000000 40%, #00000000 60%, #ff000040 100%) !important;
+}
+
 .bme-comparator-hit {
     border-color: var(--hit-color) !important;
 }
+
 .player-online {
     border-color: var(--online-color);
 }

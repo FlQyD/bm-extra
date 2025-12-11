@@ -13,8 +13,6 @@ export function getInfoPanel(bmSteamData, bmData, rustPremium) {
         } else {
             body.style.height = "26 0px";
         }
-
-
     })
     element.appendChild(header);
 

@@ -252,9 +252,6 @@
 .bme-title-row {
     gap: 30px;
 }
-.bme-settings-description{
-    margin-left: 20px !important;
-}
 .bme-settings-req{
     margin-left: 20px !important;
 }
@@ -274,18 +271,28 @@
     margin-top: 8px !important;
 }
 
+.bme-settings-key-container{
+    margin-bottom: 20px;
+}
+.bme-settings-description,
+.bme-settings-key-container p,
 .bme-key-settings-wrapper,
 .bme-key-settings-detail {
-    margin-left: 15px !important;
+    margin-left: 20px !important;
+    color: rgb(220, 220, 220);
 }
 
 .bme-key-settings-wrapper {
     display: flex;
     gap: 5px;
     margin-top: 3px;
-    margin-bottom: 15px;
 }
-
+.bme-settings-key-container > h3,
+.bme-settings-title{
+    font-size: 26px;
+    line-height: 1;
+    color: rgb(230, 230, 230);
+}
 .bme-key-settings-wrapper>input {
     width: 500px;
     padding: 3px 10px;
@@ -296,13 +303,14 @@
 
     outline: none;
 }
-.bme-settings-title{
-    font-size: 26px;
-    line-height: 1;
+
+.bme-key-settings-wrapper>input:hover {
+    background: #00000050;
 }
 
+.bme-key-settings-wrapper>input:active,
 .bme-key-settings-wrapper>input:focus {
-    background: #00000010;
+    background: #00000060;
 }
 
 .bme-key-settings-wrapper>button {
@@ -321,7 +329,10 @@
 .bme-key-settings-wrapper>button:active {
     background: #ffffff40;
 }
-
+.bme-key-settings-optional{
+    font-size: 13px;
+    color: #8d8d8d;
+}
 
 
 

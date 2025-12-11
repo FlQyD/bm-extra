@@ -28,12 +28,8 @@ export async function displayAlertLink(bmId) {
         navbar = Array.from(element.lastChild.children);
         break;
     }
-    if (!navbar) return console.error(`BM-EXTRA: Failed to locate navbar!`);
-    console.log(navbar);
-    
+    if (!navbar) return console.error(`BM-EXTRA: Failed to locate navbar!`);    
     for (const navElement of navbar) {
-        console.log();
-        
         if (navElement.innerText.trim() !== "Ban Player") continue
         const link = document.createElement("li");
         link.classList.add("bme-alert-element")
@@ -306,7 +302,7 @@ export async function swapBattleEyeGuid(bmId, bmProfile) {
 
     const steamIdObject = getSteamIdObject(bmProfile.included);
     const steamId = steamIdObject?.attributes?.identifier;
-    if (!steamId) return console.log("BM-EXTRA: Steam ID is missing")
+    if (!steamId) return console.error("BM-EXTRA: Steam ID is missing")
 
     const smName = getStreamerModeName(steamId);
     if (!smName) return console.error("BM-EXTRA: Failed to get Streamer Mode name")

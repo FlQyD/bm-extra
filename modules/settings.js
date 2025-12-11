@@ -175,7 +175,7 @@ function getIdentifierSettings() {
     )
     const showIspAsnData = getToggleSettingsElement(
         "Show extra IP info",
-        "Shows the name of the ISP and it's ASN number on the IP addresses.",
+        "Shows the name of the ISP and it's ASN on the IP addresses.",
         null, settingsBucket, "showIspAndAsnData", settings.showIspAndAsnData
     )
     const highlightVpn = getToggleSettingsElement(
@@ -188,12 +188,12 @@ function getIdentifierSettings() {
 
     const removeVpnLabel = getToggleSettingsElement(
         "Remove VPN label",
-        "Removes the VPN Labels from the identifiers.",
+        "Removes the VPN labels from the identifiers.",
         null, settingsBucket, "removeVpnLabel", settings.removeVpnLabel
     )
     const vpnAbove = getNumberSettingsElement(
         "VPN connection requirement:",
-        "The number of connections needed to count the identifier as a VPN by default.",
+        "The number of connections needed to classify the identifier as a VPN by default.",
         null, settingsBucket, "vpnAbove", settings.vpnAbove
     )
     const vpnBgColor = getColorSettingsElement(
@@ -210,14 +210,14 @@ function getIdentifierSettings() {
 
     const displayAvatars = getToggleSettingsElement(
         "Display Avatars",
-        "Display the avatars as identifiers that the player used in the past. It will only work if the identifiers are sorted by Type.",
+        `Display the avatars as identifiers that the player used in the past. It will only work if the identifiers are sorted by "Type".`,
         ["RUST API - HA"], settingsBucket, "displayAvatars", settings.displayAvatars
     )
     const avatarsSegment = document.createElement("div")
     avatarsSegment.classList.add("bme-settings-segment");
     const zoomableAvatars = getToggleSettingsElement(
         "Zoomable Avatars",
-        "Make the Avatars grow to their full sizes so you can get a better view of them.",
+        "Make the Avatars grow to their full sizes so you can get a better view of them when hovered over.",
         null, settingsBucket, "zoomableAvatars", settings.zoomableAvatars
     )
     avatarsSegment.append(zoomableAvatars)
@@ -418,7 +418,7 @@ function getSidebarSettings() {
 
     const friendComparatorEnabled = getToggleSettingsElement(
         "Player Comparator",
-        "Allows you to compare a friend list to a server's player list or to another friendlist.",
+        "Allows you to easily compare player's friendlist for common friends between them.",
         null, settingsBucket, "friendComparator-enabled", settings.friendComparator.enabled
     )
     const friendComparatorSegment = document.createElement("div")
@@ -438,7 +438,7 @@ function getSidebarSettings() {
 
     const steamFriendsEnabled = getToggleSettingsElement(
         "Show Friends",
-        "Shows the current steam Friends on the side panel.",
+        "Shows the current Steam Friends on the sidebar.",
         ["STEAM API KEY"], settingsBucket, "friends-enabled", settings.friends.enabled
     )
     const steamFriendsSegment = document.createElement("div")
@@ -446,12 +446,12 @@ function getSidebarSettings() {
 
     const steamFriendsSpot = getSwitchSettingsElement(
         "Position:",
-        "Choose which sidebar spot should the steam friends be present.",
+        "Choose which sidebar spot should the Steam Friends be present.",
         null, settingsBucket, "friends-spot", getSpotDisplay(settings.friends.spot), spots
     )
     const steamFriendsShowOnline = getToggleSettingsElement(
         "Highlight online friends",
-        "Highlights the online friends that are on the same server with the player.",
+        "Highlights the online friends that are on the same server.",
         null, settingsBucket, "friends-showOnline", settings.friends.showOnline
     )
     const steamFriendsOnlineColor = getColorSettingsElement(
@@ -463,7 +463,7 @@ function getSidebarSettings() {
 
     const historicFriendsEnabled = getToggleSettingsElement(
         "Show Historic Friends",
-        "Show historic friends",
+        "Show Historic Friends on the sidebar",
         ["RUST API - HF"], settingsBucket, "historicFriends-enabled", settings.historicFriends.enabled
     )
     const historicFriendsSegment = document.createElement("div")
@@ -471,7 +471,7 @@ function getSidebarSettings() {
 
     const historicFriendsSpot = getSwitchSettingsElement(
         "Position:",
-        "Choose which sidebar spot should the historic friends be present.",
+        "Choose which sidebar spot should the Historic Friends be present.",
         null, settingsBucket, "historicFriends-spot", getSpotDisplay(settings.historicFriends.spot), spots
     )
     const seenOnOrigin = getColorSettingsElement(
@@ -488,7 +488,7 @@ function getSidebarSettings() {
 
     const publicBansEnabled = getToggleSettingsElement(
         "Show Public bans",
-        "Shows the public bans on the current player",
+        "Shows the Public Bans on the sidebar",
         ["RUST API - PB"], settingsBucket, "publicBans-enabled", settings.publicBans.enabled
     )
     const publicBansSegment = document.createElement("div")
@@ -533,19 +533,21 @@ function getApiKeysSettings() {
     title.innerText = "API Keys";
     titleRow.appendChild(title);
 
-    const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api");
     const steamKeyElement = getApiKeyDiv("Steam API Key:", "BME_STEAM_API_KEY", "steam-api");
+    const battleMetricsKeyElements = getApiKeyDiv("BattleMetrics API Key:", "BME_BATTLEMETRICS_API_KEY", "bm-api", {
+        optional: "OPTIONAL: Provided key will take priority, it isn't necessary."
+    });
     const rustApiKeyElement = getApiKeyDiv("Rust API Key:", "BME_RUST_API_KEY", "rust-api");
-    const updater = getSmUpdater();
+    const smUpdater = getSmUpdater();
 
-    element.append(battleMetricsKeyElements, steamKeyElement, rustApiKeyElement, updater);
+    element.append(steamKeyElement, battleMetricsKeyElements, rustApiKeyElement, smUpdater);
 
 
     return element;
 }
-function getApiKeyDiv(titleText, value, id) {
+function getApiKeyDiv(titleText, value, id, meta) {
     const container = document.createElement("div");
-
+    container.classList.add("bme-settings-key-container")
     const currentKey = localStorage.getItem(value);
 
     const title = document.createElement("h3")
@@ -580,6 +582,13 @@ function getApiKeyDiv(titleText, value, id) {
         const detailItem = document.getElementById(`${id}-key-detail`);
         detailItem.innerText = getKeyDetailContent(newKey);
     })
+
+    if (meta?.optional) {
+        const optional = document.createElement("p")
+        optional.classList.add("bme-key-settings-optional")
+        optional.innerText = meta.optional;
+        container.appendChild(optional);
+    }
 
     return container;
 }
@@ -965,11 +974,12 @@ function checkOverviewSettings() {
 }
 function getDefaultOverviewSettings() {
     const settings = {};
+    settings.showAlert = true;
     settings.showAvatar = true;
     settings.showServer = true;
     settings.showInfoPanel = true;
     settings.removeSteamInfo = true;
-    settings.advancedBans = true;
+    settings.advancedBans = false;
     settings.closeAdminLog = true;
     settings.swapBattleEyeGuid = false;
     settings.maxNames = -1;

@@ -112,10 +112,11 @@ async function sidebar(bmId, playerCache) {
 }
 
 
-
-
 function setupCacheFor(bmId) {
-    const authToken = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
+    const authToken = {};
+    authToken.external = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
+    authToken.internal = getAuthToken();
+
     if (!authToken) return;
     const settings = {}
     settings.overview = JSON.parse(localStorage.getItem("BME_OVERVIEW_SETTINGS"));
@@ -141,13 +142,12 @@ function setupCacheFor(bmId) {
         cache[bmId].identifiers.avatars = getSteamAvatars(cache[bmId].bmProfile);
 
     if (validate("currentTeam", settings))
-        cache[bmId].team = getCurrentTeam(cache[bmId].bmProfile);
+        cache[bmId].team = getCurrentTeam(cache[bmId].bmProfile, authToken);
 
     if (validate("publicBans", settings))
         cache[bmId].publicBans = getPublicBans(cache[bmId].bmProfile);
-
-    //cache.historicFriends.steamidCom
-    //cache.historicFriends.steamidUk
+        //cache.historicFriends.steamidCom
+        //cache.historicFriends.steamidUk
 
     if (validate("bmActivity", settings))
         cache[bmId].bmActivity = getBmActivity(bmId, authToken);
@@ -219,7 +219,7 @@ function validate(section, { overview, identifier, sidebar }) {
 }
 async function getSteamData(bmId) {
     try {
-        const authToken = getAuthToken();
+        const authToken = getAuthToken(); //Can only be accessed via an internal token
         if (!authToken) return console.error(`BME-EXTRA: Missing auth token.`);
 
         const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}/relationships/steam-profile?version=^0.1.0&access_token=${authToken}`);
@@ -234,7 +234,8 @@ async function getSteamData(bmId) {
 }
 async function getBmProfileData(bmId, authToken) {
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=server,identifier&access_token=${authToken}`);
+        const token = authToken.external ? authToken.external : authToken.internal;
+        const resp = await fetch(`https://api.battlemetrics.com/players/${bmId}?version=^0.1.0&include=server,identifier&access_token=${token}`);
         if (resp?.status !== 200) throw new Error(`Failed to request profile information. | Status: ${resp?.status}`);
 
         const data = resp.json()
@@ -267,7 +268,7 @@ async function getRustPremiumStatusFromFacepunch(steamId) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 }
@@ -276,7 +277,8 @@ async function getBmRelations() {
 }
 async function getBmBanData(bmId, authToken) {
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/bans?version=^0.1.0&filter[player]=${bmId}&filter[expired]=true&access_token=${authToken}`);
+        const token = authToken.external ? authToken.external : authToken.internal;
+        const resp = await fetch(`https://api.battlemetrics.com/bans?version=^0.1.0&filter[player]=${bmId}&filter[expired]=true&access_token=${token}`);
         if (resp?.status !== 200) throw new Error(`Failed to request player activity. | Status: ${resp?.status}`);
 
         const data = await resp.json();
@@ -288,7 +290,8 @@ async function getBmBanData(bmId, authToken) {
 }
 async function getBmActivity(bmId, authToken) {
     try {
-        const resp = await fetch(`https://api.battlemetrics.com/activity?version=^0.1.0&tagTypeMode=and&filter[tags][blacklist]=2ff49080-f925-47e4-ab9b-9cdb75575695&filter[types][whitelist]=rustLog:playerReport,rustLog:playerDeath:PVP&filter[players]=${bmId}&include=organization,user&page[size]=1000&access_token=${authToken}`);
+        const token = authToken.external ? authToken.external : authToken.internal;
+        const resp = await fetch(`https://api.battlemetrics.com/activity?version=^0.1.0&tagTypeMode=and&filter[tags][blacklist]=2ff49080-f925-47e4-ab9b-9cdb75575695&filter[types][whitelist]=rustLog:playerReport,rustLog:playerDeath:PVP&filter[players]=${bmId}&include=organization,user&page[size]=1000&access_token=${token}`);
         if (resp?.status !== 200) throw new Error(`Failed to request player activity. | Status: ${resp?.status}`);
 
         const data = await resp.json()
@@ -356,7 +359,7 @@ async function getPlayerSummariesFromSteam(steamIds) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 }
@@ -385,17 +388,18 @@ async function getBanSummariesFromSteam(steamIds) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 }
 async function getCurrentServersPopulation(bmProfile, authToken) {
     bmProfile = await bmProfile;
 
-    const lastServer = await getLastServer(bmProfile, authToken)
+    const token = authToken.external ? authToken.external : authToken.internal;
+    const lastServer = await getLastServer(bmProfile, token)
     if (!lastServer?.online) return [];
 
-    const resp = await fetch(`https://api.battlemetrics.com/servers/${lastServer.id}?version=^0.1.0&include=identifier,player&access_token=${authToken}`)
+    const resp = await fetch(`https://api.battlemetrics.com/servers/${lastServer.id}?version=^0.1.0&include=identifier,player&access_token=${token}`)
     if (resp?.status !== 200) return [];
     const data = await resp.json();
 
@@ -472,25 +476,27 @@ async function getAvatarsFromRustApi(steamId) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 }
 
-async function getCurrentTeam(bmProfile) {
+async function getCurrentTeam(bmProfile, authToken) {
     try {
-        const authToken = await getAuthToken();
-        if (!authToken) throw new Error("Auth token wasn't found.");
+        const token = authToken.external ? authToken.external : authToken.internal;
+        if (!token) throw new Error("Auth token wasn't found.");
 
         bmProfile = await bmProfile;
 
-        const lastServer = await getLastServer(bmProfile, authToken, true);        
-        if (lastServer === null) return { teamId: -1, members: [], server: "", raw: "No server available!" }
+        const lastServer = await getLastServer(bmProfile, token, true);
+        if (lastServer === null || lastServer.lastPlayed < (Date.now()-2*24*60*60*1000))
+             return { teamId: -1, members: [], server: "", raw: "No server available!" };
+        
         const steamId = getSteamIdFromBmProfile(bmProfile)
 
         let rawTeaminfo = "";
-        if (lastServer?.orgId === "29251") rawTeaminfo = await getBzTeamInfo(steamId, lastServer.id, authToken); //BattleZone
-        if (lastServer?.orgId === "18611") rawTeaminfo = await getBrTeamInfo(steamId, lastServer.id, authToken); //Bestrust
+        if (lastServer?.orgId === "29251") rawTeaminfo = await getBzTeamInfo(steamId, lastServer.id, token); //BattleZone
+        if (lastServer?.orgId === "18611") rawTeaminfo = await getBrTeamInfo(steamId, lastServer.id, token); //Bestrust
         //Something failed
         if (!rawTeaminfo || rawTeaminfo === "error") return { teamId: "error", members: [], server: "", raw: "" }
 
@@ -507,13 +513,12 @@ async function getCurrentTeam(bmProfile) {
         rawTeaminfo.split("\n").forEach(line => {
             if (line.startsWith("ID: ")) teamId = line.split(" ")[1];
             if (line.startsWith("steamID")) {
-                onlineIndex = line.indexOf("online")
-                leaderIndex = line.indexOf("leader")
+                onlineIndex = line.indexOf("online");
+                leaderIndex = line.indexOf("leader");
             }
             if (!line.includes("76561")) return;
-
-            const memberSteamId = line.substring(0, 17)
-
+            const memberSteamId = line.substring(0, 17);
+            
             teamMembers.push({ steamId: memberSteamId, online: line[onlineIndex] === "x", leader: line[leaderIndex] === "x" });
         })
 
@@ -533,11 +538,11 @@ async function getCurrentTeam(bmProfile) {
         }
     }
 }
-async function getBzTeamInfo(steamId, serverId, authToken) {
+async function getBzTeamInfo(steamId, serverId, token) {
     const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${authToken}`,
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
             "Accept-Version": "^0.1.0"
         },
@@ -568,11 +573,11 @@ async function getBzTeamInfo(steamId, serverId, authToken) {
 
     return result;
 }
-async function getBrTeamInfo(steamId, serverId, authToken) {
+async function getBrTeamInfo(steamId, serverId, token) {
     const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${authToken}`,
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
             "Accept-Version": "^0.1.0"
         },
@@ -630,7 +635,7 @@ async function requestPublicBansFor(steamId) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 
@@ -655,11 +660,11 @@ function getAuthToken() {
 
     return authToken;
 }
-async function getMyServers(authToken) {
+async function getMyServers(token) {
     let myServers = JSON.parse(localStorage.getItem("BME_MY_SERVER_CACHE"));
     if (myServers && myServers.timestamp > Date.now() - 24 * 60 * 60 * 1000) return myServers.servers;
 
-    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${authToken}`)
+    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${token}`)
     if (resp?.status !== 200) {
         console.error(`Failed to request your servers | Status: ${resp?.status}`);
         return null;
@@ -674,8 +679,8 @@ async function getMyServers(authToken) {
     localStorage.setItem("BME_MY_SERVER_CACHE", JSON.stringify(myServers))
     return myServers.servers;
 }
-async function getLastServer(bmProfile, authToken, onlyMyServer) {
-    const myServers = await getMyServers(authToken);
+async function getLastServer(bmProfile, token, onlyMyServer) {
+    const myServers = await getMyServers(token);
     if (!myServers) return null;
 
     let servers = bmProfile.included

@@ -130,12 +130,12 @@ function getFriendlistBody(friends, settings, isHistoric) {
     const p = document.createElement("p");
     if (friends.length === 0 || typeof (friends) === "string") {
         p.innerText = "There are no historic friends recorded!";
+        if (friends === "ERROR") p.innerText = "Something went wrong!";
+        if (friends === "NO_API_KEY") p.innerText = "Missing API Key";
+        if (friends === "Private") p.innerText = "Friend list is private";
+
         if (isHistoric && friends.length === 0) p.innerText = "No friends were recorded";
         if (!isHistoric && friends.length === 0) p.innerText = "Empty friends list";
-
-        if (friends === "ERROR") p.innerText = "Something went wrong!";
-        if (friends === "NO API KEY") p.innerText = "There was no API key";
-        if (friends === "Private") p.innerText = "Friend list is private";
         container.appendChild(p);
         return container;
     }
@@ -161,11 +161,13 @@ export async function insertFriendComparator() {
     element.classList.add("bme-comparator-wrapper")
 
     const input = document.createElement("input");
+    input.placeholder = "Steam ID"
     input.addEventListener("change", async e => {
         const resetElements = Array.from(document.getElementsByClassName("bme-comparator-hit"));
         for (const element of resetElements) element.classList.remove("bme-comparator-hit");
 
         const value = e.target.value;
+        e.target.classList.remove(`bme-comparator-yellow`);
         let feedbackColor = "green";
         if (value.length !== 17) feedbackColor = "red";
         if (isNaN(Number(value))) feedbackColor = "red";
@@ -186,8 +188,9 @@ export async function insertFriendComparator() {
                 }
             }
         }
-        e.target.classList.add(`bme-compare-${feedbackColor}`)
-        setTimeout(() => { e.target.classList.remove(`bme-compare-${feedbackColor}`) }, 200);
+        e.target.classList.remove(`bme-comparator-yellow`)
+        e.target.classList.add(`bme-comparator-${feedbackColor}`)
+        setTimeout(() => { e.target.classList.remove(`bme-comparator-${feedbackColor}`) }, 600);
     })
     element.append(input);
 
@@ -299,22 +302,13 @@ function getPlayerElement(player, settings) {
     const nameValue = player.steamData?.name ? player.steamData.name : player.steamId;
     const setupValue = player.steamData?.setup !== undefined ? player.steamData.setup : null;
 
-    const data = {}
-    if (player.steamId !== undefined) data.steamId = player.steamId;
-    if (player.lastSeen !== undefined) data.lastSeen = player.lastSeen;
-    if (player.firstSeen !== undefined) data.firstSeen = player.firstSeen;
-    if (player.since !== undefined) data.since = player.since;
-    if (player.online !== undefined) data.online = player.online;
-
-    if (player.origin) data.origin = player.origin;
-
     const container = document.createElement("div");
     container.classList.add("player-container");
     if (player.online) {
         container.classList.add("player-online")
         container.style.setProperty("--online-color", settings.friends.onlineColor)
     }
-    container.dataset.save = JSON.stringify(data);
+    container.dataset.save = JSON.stringify(player);
     if (!player.steamData) container.classList.add("player-missing-data")
     if (!player.banData) container.classList.add("player-missing-ban-data")
     container.title = player.steamId;

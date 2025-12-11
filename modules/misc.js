@@ -176,7 +176,7 @@ export async function getSteamFriendlistFromSteam(steamId) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 }
@@ -198,7 +198,7 @@ export async function getSteamFriendlistFromRustApi(steamId) {
         while (!value) await new Promise(r => { setTimeout(r, 10); })
         return value;
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return "ERROR";
     }
 }

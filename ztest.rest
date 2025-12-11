@@ -1,6 +1,0 @@
-POST https://rust-api.facepunch.com/api/premium/verify
-Content-Type: application/json
-
-{
-  "SteamIds": [76561198341627965, 76561198345792209]
-}
