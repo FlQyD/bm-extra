@@ -29,7 +29,7 @@ async function findElementWhenAppears(selector) {
     let element = document.querySelector(selector);
     let count = 0;
 
-    while (count < MAX_ATTEMPTS) {        
+    while (count < MAX_ATTEMPTS) {
         element = document.querySelector(selector);
         if (element) return element;
 
@@ -167,6 +167,32 @@ export async function getLastServer(bmProfile, onlyMyServer) {
     if (!lastServer) return null;
     return lastServer
 }
+
+async function fetchMyServers(token) {
+    const responses = [];
+    if (!await fetchServers(`https://api.battlemetrics.com/servers?filter[rcon]=true&page[size]=100&access_token=${token}`)) return null;
+
+    const json = responses[0];
+    for (let i = 1; i < responses.length; i++) {
+        json.data.push(...responses[i].data);
+    }
+    json.links = undefined;
+    json.included = undefined;
+
+    return json;
+
+    async function fetchServers(url) {
+        const response = await fetch(url);
+        if (!response.ok) return false;
+
+        const json = await response.json();
+        responses.push(json);
+
+        if (json.links.next) await fetchServers(json.links.next + `&access_token=${token}`);
+        return true;
+    }
+}
+
 export async function getMyServers(onlyIds) {
     const externalAuthToken = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
     const internalAuthToken = !externalAuthToken ? getAuthToken() : null;
@@ -178,13 +204,12 @@ export async function getMyServers(onlyIds) {
         else return myServers.servers;
     }
 
-    const resp = await fetch(`https://api.battlemetrics.com/servers?version=^0.1.0&filter[rcon]=true&page[size]=100&access_token=${token}`)
-    if (resp?.status !== 200) {
-        console.error(`Failed to request your servers | Status: ${resp?.status}`);
+    const data = await fetchMyServers(token);
+    if (data == null) {
+        console.error(`Failed to request your servers`);
         return null;
     }
 
-    const data = await resp.json();
     myServers = {
         timestamp: Date.now(),
         servers: data.data.map(server => {
@@ -195,6 +220,8 @@ export async function getMyServers(onlyIds) {
             }
         })
     }
+
+    console.log(`BM-EXTRA: Fetched ${myServers.servers.length} servers`);
 
     localStorage.setItem("BME_MY_SERVER_CACHE", JSON.stringify(myServers))
     if (onlyIds) return myServers.servers.map(server => server.id);
