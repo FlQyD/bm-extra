@@ -109,8 +109,8 @@ export function fillDiscordUserElement(element, data, token) {
             btn.classList.add("bme-btn-inactive");
 
         const img = btn.querySelector("img");
-        if (guild.tags.includes("cc")) img.src = chrome.runtime.getURL('assets/img/copy-red.png');
-        else img.src = chrome.runtime.getURL('assets/img/copy-white.png');
+        if (guild.tags.includes("cc")) img.src = browser.runtime.getURL('assets/img/copy-red.png');
+        else img.src = browser.runtime.getURL('assets/img/copy-white.png');
 
         const guildAvatar = header.querySelector("img");
         guildAvatar.src = guild.avatar;

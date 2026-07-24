@@ -65,8 +65,8 @@ function getCurrentServersElement(servers) {
         thirdLine.appendChild(ipText);
 
         const copyImg = document.createElement("img");
-        if (server.online) copyImg.src = chrome.runtime.getURL('assets/img/copy.png');
-        else copyImg.src = chrome.runtime.getURL('assets/img/copy-gray.png');
+        if (server.online) copyImg.src = browser.runtime.getURL('assets/img/copy.png');
+        else copyImg.src = browser.runtime.getURL('assets/img/copy-gray.png');
         copyImg.addEventListener("click", () => {
             try {
                 navigator.clipboard.writeText(`connect ${server.ip}`)
@@ -336,7 +336,7 @@ export async function displayAlertLink(bmId) {
         link.classList.add("bme-alert-element")
         link.innerHTML = `
         <a href="/alerts/add?player=${bmId}" target="_blank" id="bme-alert-link">
-            <img class="bme-alert-icon" src="${chrome.runtime.getURL("assets/img/add-alert.png")}">
+            <img class="bme-alert-icon" src="${browser.runtime.getURL("assets/img/add-alert.png")}">
             <p>Add Alert</p>
         </a>`;
         navElement.before(link);

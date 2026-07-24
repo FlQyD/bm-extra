@@ -6,7 +6,7 @@ export async function displaySettingsButton(bmId) {
 
     const button = document.createElement("img");
     button.id = "bme-settings-button"
-    button.src = chrome.runtime.getURL('assets/img/settings.png');
+    button.src = browser.runtime.getURL('assets/img/settings.png');
 
     button.addEventListener("click", displaySettings)
 

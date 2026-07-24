@@ -228,7 +228,7 @@ function getTeamInfoHeader(teamId, teamMembers, serverName, raw) {
 
     const copyButton = document.createElement("img");
     copyButton.title = "Copy raw teaminfo!"
-    copyButton.src = chrome.runtime.getURL('assets/img/copy.png');
+    copyButton.src = browser.runtime.getURL('assets/img/copy.png');
     copyButton.addEventListener("click", () => {
         navigator.clipboard.writeText(raw);
     })
@@ -388,7 +388,7 @@ function getBanData(banData, setupValue) {
     container.classList.add(colorClass);
 
     const img = document.createElement("img");
-    img.src = chrome.runtime.getURL(iconSrc);
+    img.src = browser.runtime.getURL(iconSrc);
     container.appendChild(img);
 
     inner.appendChild(container);
@@ -418,7 +418,7 @@ function getWarningSign() {
     wrapper.classList.add("player-warning-wrapper");
 
     const img = document.createElement("img");
-    img.src = chrome.runtime.getURL('/assets/img/warning.png');
+    img.src = browser.runtime.getURL('/assets/img/warning.png');
     wrapper.appendChild(img)
 
     return wrapper;
@@ -430,7 +430,7 @@ function getBmButton(steamId) {
     element.classList.add("player-bm-button");
 
     const img = document.createElement("img");
-    img.src = chrome.runtime.getURL('/assets/img/bm-logo-small.png');
+    img.src = browser.runtime.getURL('/assets/img/bm-logo-small.png');
     element.appendChild(img);
 
     return element;

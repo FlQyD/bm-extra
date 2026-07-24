@@ -181,7 +181,7 @@ function getPlayerElement(player) {
     colorPlayer(element, "unchecked")
 
     const details = document.createElement("img");
-    details.src = chrome.runtime.getURL('assets/img/open.png');
+    details.src = browser.runtime.getURL('assets/img/open.png');
     details.classList.add("bme-ec-player-details")
     details.id = `bme-ec-player-details-${player.id}`;
 

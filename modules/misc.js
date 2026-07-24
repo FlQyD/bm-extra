@@ -293,18 +293,18 @@ export function talkToBackgroundScript(type, subject, rejectTime = 10000, token)
             if (response?.type !== `${type}_RESOLVED`) return;
 
             clearTimeout(timer);
-            chrome.runtime.onMessage.removeListener(handler);
+            browser.runtime.onMessage.removeListener(handler);
 
             resolve(response.value);
         }
 
         const timer = setTimeout(() => {
-            chrome.runtime.onMessage.removeListener(handler);
+            browser.runtime.onMessage.removeListener(handler);
             resolve("TIMEOUT");
         }, rejectTime);
 
-        chrome.runtime.onMessage.addListener(handler);
-        chrome.runtime.sendMessage({ type, subject, token });
+        browser.runtime.onMessage.addListener(handler);
+        browser.runtime.sendMessage({ type, subject, token });
     });
 }
 

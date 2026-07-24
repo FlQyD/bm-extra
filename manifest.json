@@ -23,7 +23,13 @@
     ],
     "background": {
         "service_worker": "./bg/bg.js",
+        "scripts": ["./bg/bg.js"],
         "type": "module"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "bm-extra@flqyd"
+        }
     },
     "web_accessible_resources": [
         {

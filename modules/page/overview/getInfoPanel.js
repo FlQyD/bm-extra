@@ -19,7 +19,7 @@ export function getInfoPanel(bmSteamData, bmData, rustPremium) {
     element.appendChild(header);
 
     const img = document.createElement("img");
-    img.src = chrome.runtime.getURL('assets/img/arrow.png');
+    img.src = browser.runtime.getURL('assets/img/arrow.png');
     img.id = "bme-info-panel-arrow";
     header.appendChild(img);
 
