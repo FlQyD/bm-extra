@@ -76,9 +76,6 @@ async function setupPlayerCache(bmId, authToken) {
     if (validate("bmActivity", settings, bmId))
         cache[bmId].bmActivity = getBmActivity(bmId, authToken);
 
-    if (validate("steamData", settings, bmId))
-        cache[bmId].steamData = getSteamData(bmId);
-
     if (validate("bmBanData", settings, bmId))
         cache[bmId].bmBanData = getBmBanData(bmId, authToken);
 
@@ -157,14 +154,6 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
 
         const needed = overview?.showInfoPanel
         if (needed) return true;
-    } else if (section === "steamData") {
-        if (cache[bmId]?.steamData !== undefined) return false;//Already Cached
-
-        const needed =
-            overview?.showAvatar ||
-            overview?.showInfoPanel ||
-            identifier?.showAvatar;
-        if (needed) return true;
     } else if (section === "bmBanData") {
         if (cache[bmId]?.bmBanData !== undefined) return false;//Already Cached
 
@@ -193,24 +182,6 @@ function validate(section, { overview, identifier, sidebar, banPage }, bmId) {
     }
 
     return false;
-}
-async function getSteamData(bmId) {
-    try {
-        return null;
-        /*
-        Disabled for the moment, will need to look into in the future if it's worth keeping in.
-        
-        const authToken = await getAuthToken("internal"); //Can only be accessed via an internal token
-        if (!authToken) return console.error(`BME-EXTRA: Missing auth token.`);
-
-        const data = await fetchBmAPI(`https://api.battlemetrics.com/players/${bmId}/relationships/steam-profile?version=^0.1.0&access_token=${authToken}`);
-        if (typeof (data) === "string") throw new Error(`Failed to request steam data. | Status: ${data}`);
-
-        return data;*/
-    } catch (error) {
-        console.error(`BM-EXTRA: ${error}`);
-        return null;
-    }
 }
 async function getBmProfileData(bmId, authToken) {
     try {

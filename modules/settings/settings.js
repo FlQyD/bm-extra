@@ -14,6 +14,8 @@ import { getEvasionCheckerSettings } from "./evasionChecker/page.js";
 import { checkEvasionCheckerSettings, getDefaultEvasionCheckerSettings } from "./evasionChecker/check.js";
 import { getApiKeysSettings, getKey } from "./apiKeys/page.js";
 import { checkProxyCheckSettings } from "./apiKeys/check.js";
+import { getGeneralSettings } from "./general/page.js";
+import { checkGeneralSettings, getDefaultGeneralSettings } from "./general/check.js";
 import { talkToBackgroundScript } from "../misc.js";
 
 export async function displaySettings() {
@@ -50,7 +52,7 @@ function getSettingsMenu() {
     const div = document.createElement("div")
     div.id = "bme-settings-menu";
 
-    const menuPoints = ["Overview", "Identifier", "BM Information", "Sidebar", "Bans", "Keybinds", "Evasion Checker",/*"Multi Org"*/"API Keys"];
+    const menuPoints = ["Overview", "Identifier", "BM Information", "Sidebar", "Bans", "Keybinds", "Evasion Checker",/*"Multi Org"*/"API Keys", "General"];
     for (let i = 0; i < menuPoints.length; i++) {
         const point = menuPoints[i];
 
@@ -89,6 +91,7 @@ function getSettingsBody(index) {
     if (index === 5) return getKeybindsSettings();
     if (index === 6) return getEvasionCheckerSettings();
     if (index === 7) return getApiKeysSettings();
+    if (index === 8) return getGeneralSettings();
 }
 
 
@@ -389,6 +392,7 @@ export function getResetButton(type) {
         if (type === "bm-bans") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultBanPageSettings()));
         if (type === "bm-keybinds") localStorage.setItem("BME_BAN_PAGE_SETTINGS", JSON.stringify(getDefaultKeybindsSettings()));
         if (type === "bm-evasion") localStorage.setItem("BME_EVASION_CHECKER_SETTINGS", JSON.stringify(getDefaultEvasionCheckerSettings()));
+        if (type === "bm-general") localStorage.setItem("BME_GENERAL_SETTINGS", JSON.stringify(getDefaultGeneralSettings()));
 
         location.reload();
     })
@@ -439,4 +443,5 @@ export function checkAndSetupSettingsIfMissing() {
     checkKeybindsSettings();
     checkEvasionCheckerSettings();
     checkProxyCheckSettings();
+    checkGeneralSettings();
 }

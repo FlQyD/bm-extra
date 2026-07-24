@@ -293,18 +293,18 @@ export function talkToBackgroundScript(type, subject, rejectTime = 10000, token)
             if (response?.type !== `${type}_RESOLVED`) return;
 
             clearTimeout(timer);
-            chrome.runtime.onMessage.removeListener(handler);
+            browser.runtime.onMessage.removeListener(handler);
 
             resolve(response.value);
         }
 
         const timer = setTimeout(() => {
-            chrome.runtime.onMessage.removeListener(handler);
+            browser.runtime.onMessage.removeListener(handler);
             resolve("TIMEOUT");
         }, rejectTime);
 
-        chrome.runtime.onMessage.addListener(handler);
-        chrome.runtime.sendMessage({ type, subject, token });
+        browser.runtime.onMessage.addListener(handler);
+        browser.runtime.sendMessage({ type, subject, token });
     });
 }
 
@@ -346,17 +346,164 @@ export function makeDropDownMenu(header, body, ms, prefix = "", isClosed) {
 }
 
 
+const timeZoneRegions = {
+    //Europe
+    "Atlantic/Azores": "PT", "Atlantic/Canary": "ES", "Atlantic/Cape_Verde": "CV",
+    "Atlantic/Madeira": "PT", "Atlantic/Reykjavik": "IS", "Arctic/Longyearbyen": "NO",
+    "Europe/Amsterdam": "NL", "Europe/Andorra": "AD", "Europe/Busingen": "DE",
+    "Europe/Chisinau": "MD", "Europe/Monaco": "MC", "Europe/Podgorica": "ME",
+    "Europe/Athens": "GR", "Europe/Belgrade": "RS", "Europe/Berlin": "DE",
+    "Europe/Bratislava": "SK", "Europe/Brussels": "BE", "Europe/Bucharest": "RO",
+    "Europe/Budapest": "HU", "Europe/Copenhagen": "DK", "Europe/Dublin": "IE",
+    "Europe/Helsinki": "FI", "Europe/Istanbul": "TR", "Europe/Kiev": "UA",
+    "Europe/Kyiv": "UA", "Europe/Lisbon": "PT", "Europe/Ljubljana": "SI",
+    "Europe/London": "GB", "Europe/Luxembourg": "LU", "Europe/Madrid": "ES",
+    "Europe/Malta": "MT", "Europe/Minsk": "BY", "Europe/Moscow": "RU",
+    "Europe/Oslo": "NO", "Europe/Paris": "FR", "Europe/Prague": "CZ",
+    "Europe/Riga": "LV", "Europe/Rome": "IT", "Europe/Sarajevo": "BA",
+    "Europe/Skopje": "MK", "Europe/Sofia": "BG", "Europe/Stockholm": "SE",
+    "Europe/Tallinn": "EE", "Europe/Tirane": "AL", "Europe/Vienna": "AT",
+    "Europe/Vilnius": "LT", "Europe/Warsaw": "PL", "Europe/Zagreb": "HR",
+    "Europe/Zurich": "CH",
+
+    //Americas
+    "America/Adak": "US", "America/Anchorage": "US", "America/Araguaina": "BR",
+    "America/Argentina/Buenos_Aires": "AR", "America/Argentina/La_Rioja": "AR",
+    "America/Argentina/Rio_Gallegos": "AR", "America/Argentina/Salta": "AR",
+    "America/Argentina/San_Juan": "AR", "America/Argentina/San_Luis": "AR",
+    "America/Argentina/Tucuman": "AR", "America/Argentina/Ushuaia": "AR",
+    "America/Asuncion": "PY", "America/Bahia": "BR", "America/Bahia_Banderas": "MX",
+    "America/Belem": "BR", "America/Belize": "BZ", "America/Blanc-Sablon": "CA",
+    "America/Boa_Vista": "BR", "America/Bogota": "CO", "America/Boise": "US",
+    "America/Cambridge_Bay": "CA", "America/Campo_Grande": "BR", "America/Cancun": "MX",
+    "America/Caracas": "VE", "America/Catamarca": "AR", "America/Cayenne": "GF",
+    "America/Chicago": "US", "America/Chihuahua": "MX", "America/Ciudad_Juarez": "MX",
+    "America/Coral_Harbour": "CA", "America/Cordoba": "AR", "America/Costa_Rica": "CR",
+    "America/Creston": "CA", "America/Cuiaba": "BR", "America/Danmarkshavn": "GL",
+    "America/Dawson": "CA", "America/Dawson_Creek": "CA", "America/Denver": "US",
+    "America/Detroit": "US", "America/Edmonton": "CA", "America/Eirunepe": "BR",
+    "America/El_Salvador": "SV", "America/Fort_Nelson": "CA", "America/Fortaleza": "BR",
+    "America/Glace_Bay": "CA", "America/Goose_Bay": "CA", "America/Guatemala": "GT",
+    "America/Guayaquil": "EC", "America/Guyana": "GY", "America/Halifax": "CA",
+    "America/Havana": "CU", "America/Hermosillo": "MX", "America/Indiana/Knox": "US",
+    "America/Indiana/Marengo": "US", "America/Indiana/Petersburg": "US",
+    "America/Indiana/Tell_City": "US", "America/Indiana/Vevay": "US",
+    "America/Indiana/Vincennes": "US", "America/Indiana/Winamac": "US",
+    "America/Indianapolis": "US", "America/Inuvik": "CA", "America/Iqaluit": "CA",
+    "America/Jujuy": "AR", "America/Juneau": "US", "America/Kentucky/Monticello": "US",
+    "America/La_Paz": "BO", "America/Lima": "PE", "America/Los_Angeles": "US",
+    "America/Louisville": "US", "America/Maceio": "BR", "America/Managua": "NI",
+    "America/Manaus": "BR", "America/Matamoros": "MX", "America/Mazatlan": "MX",
+    "America/Mendoza": "AR", "America/Menominee": "US", "America/Merida": "MX",
+    "America/Metlakatla": "US", "America/Mexico_City": "MX", "America/Moncton": "CA",
+    "America/Monterrey": "MX", "America/Montevideo": "UY", "America/New_York": "US",
+    "America/Nome": "US", "America/Noronha": "BR", "America/North_Dakota/Beulah": "US",
+    "America/North_Dakota/Center": "US", "America/North_Dakota/New_Salem": "US",
+    "America/Nuuk": "GL", "America/Ojinaga": "MX", "America/Panama": "PA",
+    "America/Paramaribo": "SR", "America/Phoenix": "US", "America/Port-au-Prince": "HT",
+    "America/Porto_Velho": "BR", "America/Puerto_Rico": "PR", "America/Punta_Arenas": "CL",
+    "America/Rankin_Inlet": "CA", "America/Recife": "BR", "America/Regina": "CA",
+    "America/Resolute": "CA", "America/Rio_Branco": "BR", "America/Santarem": "BR",
+    "America/Santiago": "CL", "America/Santo_Domingo": "DO", "America/Sao_Paulo": "BR",
+    "America/Scoresbysund": "GL", "America/Sitka": "US", "America/St_Johns": "CA",
+    "America/Swift_Current": "CA", "America/Tegucigalpa": "HN", "America/Thule": "GL",
+    "America/Tijuana": "MX", "America/Toronto": "CA", "America/Vancouver": "CA",
+    "America/Whitehorse": "CA", "America/Winnipeg": "CA", "America/Yakutat": "US",
+
+    //Asia
+    "Asia/Aden": "YE", "Asia/Almaty": "KZ", "Asia/Amman": "JO",
+    "Asia/Aqtau": "KZ", "Asia/Aqtobe": "KZ", "Asia/Ashgabat": "TM",
+    "Asia/Atyrau": "KZ", "Asia/Baghdad": "IQ", "Asia/Bahrain": "BH",
+    "Asia/Baku": "AZ", "Asia/Bangkok": "TH", "Asia/Beirut": "LB",
+    "Asia/Bishkek": "KG", "Asia/Brunei": "BN", "Asia/Calcutta": "IN",
+    "Asia/Choibalsan": "MN", "Asia/Colombo": "LK", "Asia/Damascus": "SY",
+    "Asia/Dhaka": "BD", "Asia/Dili": "TL", "Asia/Dubai": "AE",
+    "Asia/Dushanbe": "TJ", "Asia/Famagusta": "CY", "Asia/Gaza": "PS",
+    "Asia/Hebron": "PS", "Asia/Ho_Chi_Minh": "VN", "Asia/Hong_Kong": "HK",
+    "Asia/Hovd": "MN", "Asia/Jakarta": "ID", "Asia/Jayapura": "ID",
+    "Asia/Jerusalem": "IL", "Asia/Kabul": "AF", "Asia/Karachi": "PK",
+    "Asia/Kathmandu": "NP", "Asia/Kolkata": "IN", "Asia/Kuala_Lumpur": "MY",
+    "Asia/Kuching": "MY", "Asia/Kuwait": "KW", "Asia/Macau": "MO",
+    "Asia/Makassar": "ID", "Asia/Manila": "PH", "Asia/Muscat": "OM",
+    "Asia/Nicosia": "CY", "Asia/Oral": "KZ", "Asia/Phnom_Penh": "KH",
+    "Asia/Pontianak": "ID", "Asia/Pyongyang": "KP", "Asia/Qatar": "QA",
+    "Asia/Qostanay": "KZ", "Asia/Qyzylorda": "KZ", "Asia/Riyadh": "SA",
+    "Asia/Samarkand": "UZ", "Asia/Seoul": "KR", "Asia/Shanghai": "CN",
+    "Asia/Singapore": "SG", "Asia/Taipei": "TW", "Asia/Tashkent": "UZ",
+    "Asia/Tbilisi": "GE", "Asia/Tehran": "IR", "Asia/Thimphu": "BT",
+    "Asia/Tokyo": "JP", "Asia/Ulaanbaatar": "MN", "Asia/Urumqi": "CN",
+    "Asia/Vientiane": "LA", "Asia/Yangon": "MM", "Asia/Yerevan": "AM",
+
+    //Russia
+    "Asia/Anadyr": "RU", "Asia/Barnaul": "RU", "Asia/Chita": "RU",
+    "Asia/Irkutsk": "RU", "Asia/Kamchatka": "RU", "Asia/Khandyga": "RU",
+    "Asia/Krasnoyarsk": "RU", "Asia/Magadan": "RU", "Asia/Novokuznetsk": "RU",
+    "Asia/Novosibirsk": "RU", "Asia/Omsk": "RU", "Asia/Sakhalin": "RU",
+    "Asia/Srednekolymsk": "RU", "Asia/Tomsk": "RU", "Asia/Ust-Nera": "RU",
+    "Asia/Vladivostok": "RU", "Asia/Yakutsk": "RU", "Asia/Yekaterinburg": "RU",
+    "Europe/Astrakhan": "RU", "Europe/Kaliningrad": "RU", "Europe/Kirov": "RU",
+    "Europe/Samara": "RU", "Europe/Saratov": "RU", "Europe/Ulyanovsk": "RU",
+    "Europe/Volgograd": "RU",
+
+    //Africa
+    "Africa/Abidjan": "CI", "Africa/Accra": "GH", "Africa/Addis_Ababa": "ET",
+    "Africa/Algiers": "DZ", "Africa/Asmera": "ER", "Africa/Bamako": "ML",
+    "Africa/Bangui": "CF", "Africa/Banjul": "GM", "Africa/Bissau": "GW",
+    "Africa/Blantyre": "MW", "Africa/Brazzaville": "CG", "Africa/Bujumbura": "BI",
+    "Africa/Cairo": "EG", "Africa/Casablanca": "MA", "Africa/Ceuta": "ES",
+    "Africa/Conakry": "GN", "Africa/Dakar": "SN", "Africa/Dar_es_Salaam": "TZ",
+    "Africa/Djibouti": "DJ", "Africa/Douala": "CM", "Africa/Freetown": "SL",
+    "Africa/Gaborone": "BW", "Africa/Harare": "ZW", "Africa/Johannesburg": "ZA",
+    "Africa/Juba": "SS", "Africa/Kampala": "UG", "Africa/Khartoum": "SD",
+    "Africa/Kigali": "RW", "Africa/Kinshasa": "CD", "Africa/Lagos": "NG",
+    "Africa/Libreville": "GA", "Africa/Lome": "TG", "Africa/Luanda": "AO",
+    "Africa/Lubumbashi": "CD", "Africa/Lusaka": "ZM", "Africa/Malabo": "GQ",
+    "Africa/Maputo": "MZ", "Africa/Maseru": "LS", "Africa/Mbabane": "SZ",
+    "Africa/Mogadishu": "SO", "Africa/Monrovia": "LR", "Africa/Nairobi": "KE",
+    "Africa/Ndjamena": "TD", "Africa/Niamey": "NE", "Africa/Nouakchott": "MR",
+    "Africa/Ouagadougou": "BF", "Africa/Porto-Novo": "BJ", "Africa/Sao_Tome": "ST",
+    "Africa/Tripoli": "LY", "Africa/Tunis": "TN", "Africa/Windhoek": "NA",
+
+    //Older tzdata spellings, still reported by some browsers
+    "America/Buenos_Aires": "AR", "America/Godthab": "GL", "Asia/Katmandu": "NP",
+    "Asia/Rangoon": "MM", "Asia/Saigon": "VN",
+
+    //Oceania
+    "Australia/Adelaide": "AU", "Australia/Brisbane": "AU", "Australia/Broken_Hill": "AU",
+    "Australia/Darwin": "AU", "Australia/Eucla": "AU", "Australia/Hobart": "AU",
+    "Australia/Lindeman": "AU", "Australia/Lord_Howe": "AU", "Australia/Melbourne": "AU",
+    "Australia/Perth": "AU", "Australia/Sydney": "AU", "Pacific/Auckland": "NZ",
+    "Pacific/Fiji": "FJ", "Pacific/Guam": "GU", "Pacific/Honolulu": "US",
+    "Pacific/Noumea": "NC", "Pacific/Port_Moresby": "PG", "Pacific/Tongatapu": "TO",
+}
+
 let _locale = null;
 export function getLocale() {
     if (_locale) return _locale;
 
-    const bootstrap = getBootstrap();
-    const locale = bootstrap?.state?.account?.locale;
+    const settings = JSON.parse(localStorage.getItem("BME_GENERAL_SETTINGS"));
+    const locale = settings?.locale;
 
-    if (!locale) return "en-us";
+    _locale = !locale || locale === "auto" ? getAutoLocale() : locale;
+    return _locale;
+}
+export function getAutoLocale() {
+    const resolved = Intl.DateTimeFormat().resolvedOptions();
 
-    _locale = locale;
-    return locale;
+    const region = timeZoneRegions[resolved.timeZone];
+    if (!region) return resolved.locale;
+
+    return getRegionLocale(region);
+}
+export function getLocaleTags() {
+    const tags = new Set();
+    for (const region of Object.values(timeZoneRegions)) tags.add(getRegionLocale(region));
+
+    return [...tags];
+}
+function getRegionLocale(region) {
+    const locale = new Intl.Locale("und", { region }).maximize();
+    return `${locale.language}-${locale.region}`;
 }
 
 export function getHiddenTableRow() {

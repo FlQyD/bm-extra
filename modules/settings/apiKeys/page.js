@@ -129,7 +129,7 @@ function getApiKeyDiv(titleText, storageName, id, meta) {
         let newKey = input.value;
         input.value = "";
 
-        chrome.storage.local.set({ [storageName]: newKey });
+        browser.storage.local.set({ [storageName]: newKey });
         _keys[storageName] = newKey;
 
         if (storageName === "BME_PLAYER_INSIGHT_API_KEY") {
@@ -290,7 +290,7 @@ export async function getKey(storageName) {
     }
 }
 async function loadKey(storageName) {
-    let key = await chrome.storage.local.get(storageName);
+    let key = await browser.storage.local.get(storageName);
     key = key[storageName];
     return key;
 }

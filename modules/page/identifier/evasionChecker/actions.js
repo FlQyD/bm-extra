@@ -37,19 +37,17 @@ export async function loadPlayersPressed(e, autoStart = false) {
 async function loadPlayersHub(type) {
     const bmId = window.location.href.split("/")[5];
 
-    const authToken = {};
-    authToken.external = localStorage.getItem("BME_BATTLEMETRICS_API_KEY");
-    authToken.internal = await getAuthToken();
+    const authToken = await getAuthToken();
 
-    if (!authToken.external && !authToken.internal) {
+    if (!authToken) {
         sendMessage("Missing authToken!")
         console.error("BM-EXTRA: Missing authToken!")
         return false;
     }
 
-    if (type === "normal") return loadPlayers(bmId, authToken.external || authToken.internal, true);
-    if (type === "inclusive") return loadPlayers(bmId, authToken.external || authToken.internal, false);
-    if (type === "thorough") return loadPlayersThorough(bmId, authToken.external || authToken.internal, false);
+    if (type === "normal") return loadPlayers(bmId, authToken, true);
+    if (type === "inclusive") return loadPlayers(bmId, authToken, false);
+    if (type === "thorough") return loadPlayersThorough(bmId, authToken, false);
 
     return false
 }
@@ -183,7 +181,7 @@ function getPlayerElement(player) {
     colorPlayer(element, "unchecked")
 
     const details = document.createElement("img");
-    details.src = chrome.runtime.getURL('assets/img/open.png');
+    details.src = browser.runtime.getURL('assets/img/open.png');
     details.classList.add("bme-ec-player-details")
     details.id = `bme-ec-player-details-${player.id}`;
 

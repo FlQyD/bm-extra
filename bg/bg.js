@@ -26,7 +26,7 @@ export const errorString = {
  * apiKey - API KEY where it is needed
  * subject - steam ID, IP
  */
-chrome.runtime.onMessage.addListener(async (req, sender) => {
+browser.runtime.onMessage.addListener(async (req, sender) => {
     if (!req.type.startsWith("BME_")) return;
     if (req.type === "BME_JSON_DOWNLOAD") return downloadJsonFile(req.filename, req.data)
 
@@ -54,13 +54,13 @@ chrome.runtime.onMessage.addListener(async (req, sender) => {
         if (req.type.startsWith("BME_BM_BANS")) return await sendBmBans(req.subject, sender.tab.id, returnObject, req.token);
     } catch (error) {
         console.error(`Failed to fetch the response for ${req.type}: ${error}`);
-        return chrome.tabs.sendMessage(sender.tab.id, {...returnObject, value: errorString.failedToFetch});
+        return browser.tabs.sendMessage(sender.tab.id, {...returnObject, value: errorString.failedToFetch});
     }
 })
 
 export function sendResponse(tabId, returnObject, value) {
     returnObject.value = value;
-    return chrome.tabs.sendMessage(tabId, returnObject);
+    return browser.tabs.sendMessage(tabId, returnObject);
 }
 
 function toLog(type, key, subject) {
@@ -75,7 +75,7 @@ function toLog(type, key, subject) {
 }
 
 export async function getKey(storageName) {
-    let key = await chrome.storage.local.get(storageName);
+    let key = await browser.storage.local.get(storageName);
     key = key[storageName];
     return key || null;
 }
@@ -84,7 +84,7 @@ function downloadJsonFile(name, content) {
     const json = JSON.stringify(content, null, 4);
     const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
 
-    chrome.downloads.download({
+    browser.downloads.download({
         url: dataUrl,
         filename: name,
         saveAs: true,

@@ -53,7 +53,57 @@ class Atlas {
     }
 }
 
+// Old implementation, only works for full admins
 class BestRust {
+    id = "18611";
+
+    static {
+        organizations.push(new this());
+    }
+
+    async getTeamInfo(steamId, serverId, token) {
+        const resp = await fetch(`https://api.battlemetrics.com/servers/${serverId}/command`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept-Version": "^0.1.0"
+            },
+            body: JSON.stringify({
+                data: {
+                    type: "rconCommand",
+                    attributes: {
+                        command: "edb0be86-6f5e-4e4b-a655-5fcecd4af11f",
+                        options: {
+                            command: "teaminfo",
+                            steamid: steamId,
+                            format: " "
+                        }
+                    }
+                }
+            })
+        })
+
+        if (resp.status !== 200) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status}`);
+            return "error";
+        }
+
+        const data = await resp.json();
+
+        const result = data.data?.attributes?.result[0]?.children[1]?.children[0]?.children[0]?.reference.result
+        if (!result) {
+            console.error(`Failed to request teaminfo | Status: ${resp.status} | Result: ${result}`);
+            return "error";
+        }
+
+        return result;
+    }
+}
+
+// New implementation, works for both full admins and trial admins.
+// Commented out for now to re-add old implementation, as this method of getting rconRoles has been patched by recent BM changes (storeBootstrap encryption).
+/*class BestRust {
     id = "18611";
 
     static {
@@ -125,7 +175,7 @@ class BestRust {
             }
         }
     }
-}
+}*/
 
 class BattleZone {
     id = "29251";

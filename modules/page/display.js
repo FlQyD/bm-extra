@@ -6,7 +6,7 @@ export async function displaySettingsButton(bmId) {
 
     const button = document.createElement("img");
     button.id = "bme-settings-button"
-    button.src = chrome.runtime.getURL('assets/img/settings.png');
+    button.src = browser.runtime.getURL('assets/img/settings.png');
 
     button.addEventListener("click", displaySettings)
 
@@ -17,7 +17,7 @@ export async function displaySettingsButton(bmId) {
     invokeRerender(button, bmId, "overview", displaySettingsButton, [bmId]);
 }
 
-export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
+export async function displayAvatar(bmId, bmProfile, loc) {
     const avatar = document.getElementById("bme-avatar");
     if (avatar) avatar.remove();
     bmProfile = await bmProfile;
@@ -28,12 +28,6 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
     const profile = steamIdObject?.attributes?.metadata?.profile;
     if (profile) avatarUrl = profile.avatarmedium;
 
-    if (!avatarUrl) {
-        bmSteamData = await bmSteamData;
-        const avatar = bmSteamData?.attributes?.avatar;
-        if (!avatar) return;
-        avatarUrl = `https://avatars.fastly.steamstatic.com/${avatar}`.replace(".jpg", "_medium.jpg");
-    }
     if (!avatarUrl) return;
 
     const mainElement = await getElementWhenAppears("main", true);
@@ -50,7 +44,7 @@ export async function displayAvatar(bmId, bmProfile, bmSteamData, loc) {
 
     if (shouldAbort(bmId, "bme-avatar")) return;
     title.insertAdjacentElement("afterbegin", avatarElement)
-    invokeRerender(title, bmId, loc, displayAvatar, [bmId, bmProfile, bmSteamData, loc])
+    invokeRerender(title, bmId, loc, displayAvatar, [bmId, bmProfile, loc])
 }
 
 export async function swapBattleEyeGuid(bmId, bmProfile, target) {

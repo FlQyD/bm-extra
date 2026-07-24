@@ -95,12 +95,12 @@ function getHeader(main, player) {
                 <div class="bme-flex">
                     <p>Last ban: ${lastBan}</p>
                     ${isGameBanned ?
-                `<img title="Currently Rust Game Banned" src="${chrome.runtime.getURL('/assets/img/eac-banned.png')}">` :
-                `<img title="Not Game Banned" src="${chrome.runtime.getURL('/assets/img/not-eac-banned.png')}">`
+                `<img title="Currently Rust Game Banned" src="${browser.runtime.getURL('/assets/img/eac-banned.png')}">` :
+                `<img title="Not Game Banned" src="${browser.runtime.getURL('/assets/img/not-eac-banned.png')}">`
             }
                     ${isServerBanned ?
-                `<img title="Server Banned" src="${chrome.runtime.getURL('/assets/img/server-banned.png')}">` :
-                `<img title="Not Server Banned" src="${chrome.runtime.getURL('/assets/img/not-server-banned.png')}">`
+                `<img title="Server Banned" src="${browser.runtime.getURL('/assets/img/server-banned.png')}">` :
+                `<img title="Not Server Banned" src="${browser.runtime.getURL('/assets/img/not-server-banned.png')}">`
             }
                 </div>
             </div>
@@ -140,7 +140,7 @@ function getNameSection(main, player, outcome) {
 
         header.innerHTML = `
             <p>Name match: ${outcome.maxNameMatch}%</p>
-            <img src="${chrome.runtime.getURL('/assets/img/arrow.png')}">
+            <img src="${browser.runtime.getURL('/assets/img/arrow.png')}">
         `;
 
         header.addEventListener("click", e => {
