@@ -1,4 +1,6 @@
 # bm-extra
+> **Deprecated:** This repository is deprecated and won't be updated in the future. You should be using [nikko-gh/bm-extra](https://github.com/nikko-gh/bm-extra)
+
 Chromium-based BattleMetrics extension providing quality-of-life features for Rust admins.
 
 ## Installation
